@@ -1,0 +1,2611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Counter — Shop Manager</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1B2A4A">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{
+  --ink:#1B2A4A;
+  --ink-2:#28395c;
+  --paper:#F7F5F0;
+  --surface:#FFFEFB;
+  --rule:#DAD4C5;
+  --rule-2:#EAE5D8;
+  --accent:#2E6B4F;
+  --accent-2:#3F8F5F;
+  --rust:#B4532A;
+  --rust-2:#F3E2D8;
+  --text:#20262f;
+  --text-dim:#6b7280;
+  --gold:#9C7A2E;
+  --radius:10px;
+  --serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', Palatino, serif;
+  --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+}
+*{box-sizing:border-box;}
+html,body{height:100%;}
+body{
+  margin:0; background:var(--paper); color:var(--text); font-family:var(--sans);
+  font-size:14px; -webkit-font-smoothing:antialiased;
+}
+::selection{ background: var(--accent-2); color:#fff; }
+button{font-family:inherit; cursor:pointer;}
+input, select, textarea{font-family:inherit; font-size:14px;}
+table{border-collapse:collapse; width:100%;}
+.num, .money{ font-variant-numeric: tabular-nums; font-feature-settings:"tnum"; }
+a{color:var(--accent);}
+
+/* ---------- Login ---------- */
+#login-screen{
+  position:fixed; inset:0; background:
+    linear-gradient(180deg, var(--ink) 0%, var(--ink-2) 100%);
+  display:flex; align-items:center; justify-content:center; z-index:500;
+}
+.login-card{
+  background:var(--surface); width:380px; max-width:92vw; border-radius:14px;
+  padding:36px 32px; box-shadow:0 30px 60px rgba(0,0,0,.35);
+}
+.login-brand{ text-align:center; margin-bottom:22px; }
+.login-brand .mark{
+  width:52px; height:52px; margin:0 auto 12px; border-radius:12px;
+  background:var(--ink); color:#fff; display:flex; align-items:center; justify-content:center;
+  font-family:var(--serif); font-size:24px; font-weight:700;
+}
+.login-brand h1{ font-family:var(--serif); font-size:22px; margin:0; letter-spacing:.2px;}
+.login-brand p{ color:var(--text-dim); font-size:12.5px; margin:4px 0 0;}
+.user-pick{ display:grid; gap:8px; margin-bottom:18px; }
+.user-btn{
+  display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:10px;
+  border:1px solid var(--rule); background:#fff; text-align:left;
+}
+.user-btn:hover{ border-color:var(--accent); }
+.user-avatar{
+  width:34px; height:34px; border-radius:50%; background:var(--accent); color:#fff;
+  display:flex; align-items:center; justify-content:center; font-weight:700; flex:none;
+}
+.user-btn .role-tag{ margin-left:auto; font-size:11px; color:var(--text-dim); border:1px solid var(--rule); padding:2px 8px; border-radius:20px; }
+.pin-pad{ display:none; }
+.pin-pad.show{ display:block; }
+.pin-dots{ display:flex; justify-content:center; gap:10px; margin:14px 0 18px; }
+.pin-dots span{ width:12px; height:12px; border-radius:50%; border:1.5px solid var(--ink); }
+.pin-dots span.filled{ background:var(--ink); }
+.pin-keys{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+.pin-keys button{
+  padding:14px 0; border-radius:10px; border:1px solid var(--rule); background:#fff;
+  font-size:17px; font-family:var(--serif);
+}
+.pin-keys button:active{ background:var(--rule-2); }
+.login-err{ color:var(--rust); font-size:12.5px; text-align:center; min-height:16px; margin-top:4px;}
+.login-back{ text-align:center; margin-top:10px; }
+.login-back button{ background:none; border:none; color:var(--text-dim); font-size:12.5px; text-decoration:underline;}
+.setup-form label{ display:block; font-size:12px; color:var(--text-dim); margin:12px 0 4px; }
+.setup-form input{ width:100%; padding:9px 10px; border:1px solid var(--rule); border-radius:8px; }
+
+/* ---------- App shell ---------- */
+#app{ display:none; min-height:100%; }
+#app.show{ display:flex; }
+#sidebar{
+  width:212px; flex:none; background:var(--ink); color:#EDEFF3; min-height:100vh;
+  display:flex; flex-direction:column; position:sticky; top:0; height:100vh;
+}
+.side-brand{ padding:20px 18px 14px; border-bottom:1px solid rgba(255,255,255,.1); }
+.side-brand .name{ font-family:var(--serif); font-size:17px; }
+.side-brand .biz{ font-size:11px; color:#B7C0D6; margin-top:2px; }
+.side-nav{ padding:10px 10px; flex:1; overflow-y:auto; }
+.side-nav .grp-label{ font-size:10.5px; color:#8894AE; margin:14px 10px 6px; letter-spacing:.3px; }
+.side-link{
+  display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:8px; color:#D7DCE8;
+  text-decoration:none; font-size:13.5px; margin-bottom:2px; border:none; background:none; width:100%; text-align:left;
+}
+.side-link .ic{ width:18px; text-align:center; font-family:var(--serif); }
+.side-link:hover{ background:rgba(255,255,255,.06); }
+.side-link.active{ background:var(--accent); color:#fff; }
+.side-foot{ padding:12px 14px 16px; border-top:1px solid rgba(255,255,255,.1); }
+.side-user{ display:flex; align-items:center; gap:8px; font-size:12.5px; color:#CBD3E3; }
+.side-user .dot{ width:8px; height:8px; border-radius:50%; background:var(--accent-2); }
+.side-foot button{ margin-top:8px; background:none; border:1px solid rgba(255,255,255,.18); color:#D7DCE8; padding:6px 10px; border-radius:7px; font-size:12px; width:100%; }
+
+#main{ flex:1; min-width:0; }
+#topbar{
+  position:sticky; top:0; z-index:20; background:var(--paper); border-bottom:1px solid var(--rule);
+  padding:14px 24px; display:flex; align-items:center; gap:14px;
+}
+#topbar h2{ font-family:var(--serif); font-size:19px; margin:0; font-weight:600; }
+#topbar .sub{ font-size:12px; color:var(--text-dim); }
+.top-actions{ margin-left:auto; display:flex; gap:8px; }
+#content{ padding:22px 24px 60px; }
+
+/* ---------- Buttons ---------- */
+.btn{
+  padding:8px 14px; border-radius:8px; border:1px solid var(--rule); background:#fff; color:var(--text);
+  font-size:13px; display:inline-flex; align-items:center; justify-content:center; gap:6px;
+}
+.btn:hover{ border-color:#c7c0ac; }
+.btn-primary{ background:var(--ink); border-color:var(--ink); color:#fff; }
+.btn-primary:hover{ background:var(--ink-2); }
+.btn-accent{ background:var(--accent); border-color:var(--accent); color:#fff; }
+.btn-accent:hover{ background:var(--accent-2); }
+.btn-danger{ background:#fff; border-color:var(--rust); color:var(--rust); }
+.btn-danger:hover{ background:var(--rust-2); }
+.btn-ghost{ background:none; border-color:transparent; color:var(--text-dim); }
+.btn-sm{ padding:5px 9px; font-size:12px; border-radius:7px; }
+.btn:disabled{ opacity:.45; cursor:not-allowed; }
+
+/* ---------- Cards / stats ---------- */
+.grid{ display:grid; gap:14px; }
+.g-4{ grid-template-columns:repeat(4,1fr); }
+.g-3{ grid-template-columns:repeat(3,1fr); }
+.g-2{ grid-template-columns:repeat(2,1fr); }
+@media (max-width:1000px){ .g-4{grid-template-columns:repeat(2,1fr);} .g-3{grid-template-columns:repeat(2,1fr);} }
+.card{ background:var(--surface); border:1px solid var(--rule); border-radius:var(--radius); padding:16px 18px; }
+.stat{ display:flex; flex-direction:column; gap:6px; }
+.stat .lbl{ font-size:12px; color:var(--text-dim); }
+.stat .val{ font-family:var(--serif); font-size:26px; }
+.stat .delta{ font-size:11.5px; color:var(--accent-2); }
+.stat.warn .val{ color:var(--rust); }
+.section-title{ font-family:var(--serif); font-size:16px; margin:26px 0 10px; display:flex; align-items:center; justify-content:space-between; }
+
+/* ---------- Tables (ledger style) ---------- */
+.tbl-wrap{ background:var(--surface); border:1px solid var(--rule); border-radius:var(--radius); overflow:hidden; }
+table.ledger{ width:100%; }
+table.ledger th{
+  text-align:left; font-size:11px; color:var(--text-dim); font-weight:600; padding:10px 14px;
+  border-bottom:1.5px solid var(--rule); background:#F1EFE7; white-space:nowrap;
+}
+table.ledger td{ padding:10px 14px; border-bottom:1px solid var(--rule-2); font-size:13.5px; vertical-align:middle;}
+table.ledger tbody tr:hover{ background:#FBFAF6; }
+table.ledger tbody tr:last-child td{ border-bottom:none; }
+.tbl-empty{ padding:40px 20px; text-align:center; color:var(--text-dim); font-size:13px; }
+.badge{ font-size:11px; padding:2px 8px; border-radius:20px; border:1px solid var(--rule); display:inline-block; }
+.badge-ok{ background:#E9F3EC; color:var(--accent); border-color:#CFE6D6; }
+.badge-warn{ background:#FBEFE3; color:var(--rust); border-color:#F0D6C0; }
+.badge-out{ background:#FBE7E4; color:#B23B2A; border-color:#F0C7C0; }
+.badge-due{ background:#FDF3DA; color:var(--gold); border-color:#EFDCA0; }
+
+/* ---------- Forms / Modal ---------- */
+.modal-bg{ position:fixed; inset:0; background:rgba(20,24,32,.45); display:none; align-items:flex-start; justify-content:center; z-index:200; overflow-y:auto; padding:40px 16px;}
+.modal-bg.show{ display:flex; }
+.modal{ background:var(--surface); width:560px; max-width:100%; border-radius:14px; padding:22px 24px 24px; box-shadow:0 30px 60px rgba(0,0,0,.3); }
+.modal.wide{ width:820px; }
+.modal h3{ font-family:var(--serif); margin:0 0 4px; font-size:18px; }
+.modal .desc{ font-size:12.5px; color:var(--text-dim); margin-bottom:16px; }
+.modal .close{ float:right; background:none; border:none; font-size:20px; color:var(--text-dim); }
+.field{ margin-bottom:13px; }
+.field label{ display:block; font-size:12px; color:var(--text-dim); margin-bottom:4px; }
+.field input, .field select, .field textarea{
+  width:100%; padding:8px 10px; border:1px solid var(--rule); border-radius:8px; background:#fff; color:var(--text);
+}
+.field textarea{ resize:vertical; min-height:56px; }
+.field .hint{ font-size:11px; color:var(--text-dim); margin-top:3px; }
+.row2{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.row3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
+.modal-actions{ display:flex; justify-content:flex-end; gap:8px; margin-top:18px; padding-top:14px; border-top:1px solid var(--rule-2);}
+.form-err{ color:var(--rust); font-size:12px; margin-top:4px; min-height:14px; }
+
+/* ---------- Search / filters ---------- */
+.toolbar{ display:flex; gap:8px; align-items:center; margin-bottom:14px; flex-wrap:wrap; }
+.toolbar input[type=text], .toolbar input[type=search]{ padding:8px 12px; border:1px solid var(--rule); border-radius:8px; min-width:220px; background:#fff;}
+.toolbar select{ padding:8px 10px; border:1px solid var(--rule); border-radius:8px; background:#fff;}
+.spacer{ flex:1; }
+
+/* ---------- POS ---------- */
+.pos-wrap{ display:grid; grid-template-columns:1.3fr 1fr; gap:16px; align-items:start; }
+@media (max-width:1100px){ .pos-wrap{ grid-template-columns:1fr; } }
+.pos-scan{ padding:11px 14px; border:1.5px solid var(--ink); border-radius:9px; width:100%; font-size:14px; }
+.scan-row{ display:flex; gap:8px; margin-bottom:12px; align-items:stretch; }
+.scan-row .pos-scan{ margin-bottom:0; }
+.scan-btn{
+  flex:none; width:44px; border-radius:9px; border:1.5px solid var(--ink); background:var(--ink); color:#fff;
+  font-size:17px; display:flex; align-items:center; justify-content:center;
+}
+.scan-btn:hover{ background:var(--ink-2); }
+.field .scan-inline{ display:flex; gap:6px; }
+.field .scan-inline input{ flex:1; }
+.field .scan-inline button{ flex:none; }
+
+/* ---------- Search-or-scan bar ---------- */
+.search-scan{ display:flex; align-items:center; gap:8px; background:#fff; border:1.5px solid var(--ink); border-radius:12px; padding:4px 4px 4px 12px; margin-bottom:12px; }
+.search-scan .ss-ic{ color:var(--text-dim); font-size:17px; }
+.search-scan input{ flex:1; min-width:0; border:none; outline:none; padding:10px 4px; font-size:14px; background:transparent; }
+.ss-btn{ flex:none; border:none; background:var(--accent); color:#fff; font-weight:700; letter-spacing:.5px; font-size:12.5px; padding:11px 15px; border-radius:9px; display:flex; align-items:center; gap:6px; }
+.ss-btn:hover{ background:var(--accent-2); }
+
+/* ---------- Live scanner (full screen) ---------- */
+body.scanning{ overflow:hidden; }
+#scanner{ position:fixed; inset:0; z-index:400; background:#000; color:#fff; }
+#scanner video{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+.sc-top{ position:absolute; top:0; left:0; right:0; display:flex; align-items:center; justify-content:space-between; padding:calc(12px + env(safe-area-inset-top)) 14px 14px; background:linear-gradient(180deg,rgba(0,0,0,.65),transparent); z-index:3; }
+.sc-title{ font-family:var(--serif); font-size:16px; }
+.sc-round{ width:42px; height:42px; border-radius:50%; border:none; background:rgba(255,255,255,.18); color:#fff; font-size:18px; }
+.sc-round.on{ background:#fbbf24; color:#000; }
+.sc-view{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; padding-bottom:250px; pointer-events:none; }
+.sc-frame{ position:relative; width:88%; max-width:520px; height:28vh; max-height:230px; border-radius:16px; box-shadow:0 0 0 100vmax rgba(0,0,0,.55); }
+.sc-frame .cn{ position:absolute; width:28px; height:28px; border:4px solid #fff; transition:border-color .15s; }
+.cn.tl{ top:-2px; left:-2px; border-right:none; border-bottom:none; border-top-left-radius:16px; }
+.cn.tr{ top:-2px; right:-2px; border-left:none; border-bottom:none; border-top-right-radius:16px; }
+.cn.bl{ bottom:-2px; left:-2px; border-right:none; border-top:none; border-bottom-left-radius:16px; }
+.cn.br{ bottom:-2px; right:-2px; border-left:none; border-top:none; border-bottom-right-radius:16px; }
+.sc-frame.ok .cn{ border-color:#4ade80; }
+.sc-frame.bad .cn{ border-color:#f87171; }
+.sc-line{ position:absolute; left:10px; right:10px; height:2px; background:#ef4444; box-shadow:0 0 12px #ef4444; animation:scanline 1.7s ease-in-out infinite alternate; }
+.sc-tap{ position:absolute; left:50%; top:46%; transform:translate(-50%,-50%); z-index:5; display:flex; flex-direction:column; align-items:center; gap:8px;
+  background:rgba(20,24,32,.88); color:#fff; border:1.5px solid rgba(255,255,255,.35); border-radius:16px; padding:22px 28px; font-size:14px; }
+.sc-tap:disabled{ opacity:.6; }
+@keyframes scanline{ from{ top:10%; } to{ top:90%; } }
+#scanner.bad video, #scanner.bad .sc-view{ display:none; }
+.sc-sheet{ position:absolute; left:0; right:0; bottom:0; z-index:3; background:#fff; color:var(--text); border-radius:20px 20px 0 0; padding:14px 16px calc(16px + env(safe-area-inset-bottom)); box-shadow:0 -10px 30px rgba(0,0,0,.35); }
+#scanner.bad .sc-sheet{ top:80px; bottom:auto; border-radius:20px; margin:0 12px; padding-bottom:16px; }
+.sc-msg{ font-size:12.5px; color:var(--text-dim); text-align:center; margin-bottom:10px; min-height:17px; }
+.sc-last{ display:flex; align-items:center; justify-content:space-between; gap:8px; background:#E9F3EC; border:1px solid #CFE6D6; color:var(--accent); border-radius:10px; padding:10px 12px; font-size:13.5px; margin-bottom:10px; min-height:44px; }
+.sc-last.empty{ background:var(--paper); border-color:var(--rule); color:var(--text-dim); }
+.sc-plus{ border:1px solid var(--accent); background:#fff; color:var(--accent); border-radius:8px; padding:5px 12px; font-weight:700; font-size:14px; }
+.sc-row{ display:flex; gap:8px; }
+.sc-ghost{ flex:1; padding:13px 10px; border-radius:11px; border:1px solid var(--rule); background:#fff; color:var(--text); font-size:14px; }
+.sc-done{ flex:1.4; padding:13px 10px; border-radius:11px; border:none; background:var(--accent); color:#fff; font-size:14px; font-weight:700; }
+.sc-typed{ display:flex; gap:8px; }
+.sc-typed input{ flex:1; min-width:0; padding:12px; border:1px solid var(--rule); border-radius:10px; font-size:16px; }
+.sc-unknown{ background:#FBEFE3; border:1px solid #F0D6C0; border-radius:10px; padding:12px; margin-bottom:10px; font-size:13.5px; line-height:1.45; }
+.sc-problem h4{ margin:0 0 6px; font-family:var(--serif); font-size:17px; }
+.sc-problem p{ margin:0 0 6px; font-size:13px; color:var(--text-dim); line-height:1.5; }
+.sc-problem ol{ margin:8px 0 10px 18px; padding:0; font-size:13px; line-height:1.55; }
+.sc-copy{ display:flex; gap:6px; margin:0 0 10px; }
+.sc-copy input{ flex:1; min-width:0; padding:10px; border:1px solid var(--rule); border-radius:9px; font-size:12px; font-family:var(--mono); background:var(--paper); }
+.sc-copy button{ flex:none; padding:0 16px; border:none; border-radius:9px; background:var(--ink); color:#fff; font-weight:700; }
+.sc-tech{ font-size:11px; color:var(--text-dim); font-family:var(--mono); margin-bottom:8px; }
+.sc-photo{ position:relative; display:block; text-align:center; font-size:12px; color:var(--text-dim); text-decoration:underline; margin-top:12px; overflow:hidden; padding:6px; }
+.sc-photo input{ position:absolute; inset:0; opacity:0; width:100%; height:100%; cursor:pointer; font-size:0; }
+.pos-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; max-height:560px; overflow-y:auto; padding-right:4px;}
+@media (max-width:700px){ .pos-grid{grid-template-columns:repeat(2,1fr);} }
+.pos-item{ background:var(--surface); border:1px solid var(--rule); border-radius:10px; padding:11px; text-align:left; }
+.pos-item:hover{ border-color:var(--accent); }
+.pos-item .nm{ font-size:13px; font-weight:600; line-height:1.3; margin-bottom:4px;}
+.pos-item .meta{ font-size:11px; color:var(--text-dim); }
+.pos-item .pr{ margin-top:6px; font-family:var(--serif); font-size:15px; }
+.pos-item.disabled{ opacity:.4; }
+.cart-box{ background:var(--surface); border:1px solid var(--rule); border-radius:12px; padding:16px; position:sticky; top:80px;}
+.cart-box h4{ font-family:var(--serif); margin:0 0 10px; font-size:15px; display:flex; justify-content:space-between;}
+.cart-line{ display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid var(--rule-2); font-size:13px;}
+.cart-line .nm{ flex:1; }
+.cart-line .qty-ctl{ display:flex; align-items:center; gap:4px; }
+.cart-line .qty-ctl button{ width:22px; height:22px; border-radius:5px; border:1px solid var(--rule); background:#fff;}
+.cart-line .qty-ctl input{ width:36px; text-align:center; padding:3px; border:1px solid var(--rule); border-radius:5px;}
+.cart-line .amt{ width:62px; text-align:right; }
+.cart-line .rm{ background:none; border:none; color:var(--rust); font-size:15px; }
+.cart-empty{ color:var(--text-dim); font-size:12.5px; padding:20px 0; text-align:center; }
+.cart-tot-row{ display:flex; justify-content:space-between; font-size:13px; padding:5px 0; }
+.cart-tot-row.grand{ font-family:var(--serif); font-size:18px; border-top:1.5px solid var(--rule); margin-top:6px; padding-top:10px;}
+
+/* ---------- Ledger view (party) ---------- */
+.ledger-head{ display:flex; align-items:center; gap:14px; margin-bottom:16px; }
+.ledger-avatar{ width:46px; height:46px; border-radius:50%; background:var(--ink); color:#fff; display:flex; align-items:center; justify-content:center; font-family:var(--serif); font-size:18px;}
+.bal-pos{ color:var(--rust); font-weight:600; }
+.bal-neg{ color:var(--accent); font-weight:600; }
+
+/* ---------- misc ---------- */
+.tabs{ display:flex; gap:4px; border-bottom:1px solid var(--rule); margin-bottom:16px; }
+.tab{ padding:9px 14px; border:none; background:none; font-size:13px; color:var(--text-dim); border-bottom:2px solid transparent; }
+.tab.active{ color:var(--ink); border-color:var(--accent); font-weight:600; }
+.chart-svg text{ font-family:var(--sans); }
+.empty-state{ text-align:center; padding:60px 20px; color:var(--text-dim); }
+.empty-state .big{ font-family:var(--serif); font-size:17px; color:var(--text); margin-bottom:6px; }
+.toast-wrap{ position:fixed; bottom:20px; right:20px; z-index:999; display:flex; flex-direction:column; gap:8px; }
+.toast{ background:var(--ink); color:#fff; padding:10px 16px; border-radius:9px; font-size:13px; box-shadow:0 10px 24px rgba(0,0,0,.25); animation:in .18s ease; }
+.toast.err{ background:var(--rust); }
+@keyframes in{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);} }
+.print-only{ display:none; }
+.perm-lock{ text-align:center; padding:80px 20px; color:var(--text-dim); }
+
+
+/* ---------- Phone layout ---------- */
+.mob-only{ display:none; }
+@media (max-width:820px){
+  .mob-only{ display:inline-flex; }
+  #app.show{ display:block; }
+  #sidebar{
+    position:fixed; left:0; right:0; bottom:0; top:auto; width:100%; height:auto; min-height:0; z-index:90;
+    flex-direction:row; border-top:1px solid rgba(255,255,255,.14);
+  }
+  .side-brand, .side-foot{ display:none; }
+  .side-nav{
+    display:flex; flex-direction:row; gap:2px; padding:6px 6px calc(6px + env(safe-area-inset-bottom));
+    overflow-x:auto; overflow-y:hidden; width:100%;
+  }
+  .side-nav .grp-label{ display:none; }
+  .side-link{ flex:none; flex-direction:column; gap:2px; width:auto; padding:6px 11px; font-size:10.5px; margin:0; white-space:nowrap; }
+  .side-link .ic{ font-size:16px; }
+  #topbar{ padding:10px 14px; gap:8px; }
+  #topbar h2{ font-size:17px; }
+  .top-actions{ flex-wrap:wrap; justify-content:flex-end; }
+  #content{ padding:14px 12px 96px; }
+  input, select, textarea{ font-size:16px !important; }
+  .g-4, .g-3{ grid-template-columns:1fr 1fr; }
+  .g-2{ grid-template-columns:1fr; }
+  .stat .val{ font-size:21px; }
+  .row2, .row3{ grid-template-columns:1fr; gap:0; }
+  .modal-bg{ padding:14px 8px; }
+  .modal, .modal.wide{ padding:18px 16px 20px; }
+  .tbl-wrap{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  table.ledger th, table.ledger td{ padding:9px 10px; }
+  .cart-box{ position:static; }
+  .pos-grid{ max-height:none; grid-template-columns:repeat(2,1fr); }
+  .toolbar input[type=text], .toolbar input[type=search]{ min-width:0; flex:1; }
+  .toast-wrap{ bottom:84px; right:12px; left:12px; }
+}
+
+@media print{
+  body *{ visibility:hidden; }
+  #print-area, #print-area *{ visibility:visible; }
+  #print-area{ position:absolute; left:0; top:0; width:100%; padding:20px; }
+  .print-only{ display:block; }
+}
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-brand">
+      <div class="mark" id="login-mark">C</div>
+      <h1 id="login-biz-name">Counter</h1>
+      <p>Shop &amp; inventory manager</p>
+    </div>
+
+    <div id="setup-block" style="display:none">
+      <div class="setup-form">
+        <label>Shop / business name</label>
+        <input type="text" id="setup-biz" placeholder="e.g. Sharma General Store">
+        <label>Your name (first admin account)</label>
+        <input type="text" id="setup-name" placeholder="e.g. Ramesh">
+        <label>Set a 4-digit PIN</label>
+        <input type="password" id="setup-pin" maxlength="4" inputmode="numeric" placeholder="••••">
+      </div>
+      <div class="login-err" id="setup-err"></div>
+      <button class="btn btn-primary" style="width:100%;margin-top:6px;padding:11px;" onclick="APP.finishSetup()">Create shop</button>
+    </div>
+
+    <div id="pick-block">
+      <div class="user-pick" id="user-pick-list"></div>
+    </div>
+
+    <div class="pin-pad" id="pin-block">
+      <div style="text-align:center;font-size:13px;color:var(--text-dim);" id="pin-who"></div>
+      <div class="pin-dots" id="pin-dots">
+        <span></span><span></span><span></span><span></span>
+      </div>
+      <div class="pin-keys" id="pin-keys"></div>
+      <div class="login-err" id="pin-err"></div>
+      <div class="login-back"><button onclick="APP.backToPick()">← choose a different user</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ APP SHELL ============ -->
+<div id="app">
+  <aside id="sidebar">
+    <div class="side-brand">
+      <div class="name" id="side-biz-name">Counter</div>
+      <div class="biz">Shop manager</div>
+    </div>
+    <nav class="side-nav" id="side-nav"></nav>
+    <div class="side-foot">
+      <div class="side-user"><span class="dot"></span><span id="side-user-name">—</span></div>
+      <button onclick="APP.logout()">Switch user</button>
+    </div>
+  </aside>
+
+  <div id="main">
+    <div id="topbar">
+      <div>
+        <h2 id="page-title">Dashboard</h2>
+        <div class="sub" id="page-sub"></div>
+      </div>
+      <div class="top-actions" id="page-actions"></div>
+      <button class="btn btn-sm mob-only" title="Switch user" onclick="APP.logout()">⎋</button>
+    </div>
+    <div id="content"></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-bg"><div class="modal" id="modal-box"></div></div>
+<div id="scanner" style="display:none"></div>
+<div class="toast-wrap" id="toast-wrap"></div>
+<div id="print-area" class="print-only"></div>
+
+<script>
+/* =========================================================
+   COUNTER — offline shop / inventory manager
+   All data lives in memory + localStorage (best-effort cache).
+   True persistence = Export / Import JSON from Settings > Backup.
+   ========================================================= */
+
+const STORAGE_KEY = 'counter_shop_data_v1';
+
+function uid(p){ return (p||'id') + '_' + Math.random().toString(36).slice(2,9) + Date.now().toString(36).slice(-4); }
+function todayISO(){ return new Date().toISOString().slice(0,10); }
+function nowISO(){ return new Date().toISOString(); }
+function fmtDate(d){ if(!d) return '—'; const dt = new Date(d); return dt.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}); }
+function fmtDateTime(d){ const dt = new Date(d); return dt.toLocaleDateString('en-IN',{day:'2-digit',month:'short'}) + ', ' + dt.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}); }
+function money(n){ n = Number(n)||0; const cur = DB.settings.currency || '₹'; return cur + n.toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function initials(name){ return (name||'?').trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase(); }
+
+/* ---------------- default seed data ---------------- */
+function seedData(){
+  return {
+    business: { name:'', address:'', phone:'', wholesaleMode:false },
+    settings: { currency:'₹', invoicePrefix:'INV-', nextInvoiceNo:1, billPrefix:'PB-', nextBillNo:1, lowStockDefault:5 },
+    users: [],
+    currentUserId: null,
+    categories: ['General','Grocery','Beverages','Snacks','Household','Stationery'],
+    units: ['pcs','kg','g','l','ml','box','pack'],
+    items: [],
+    parties: [],
+    sales: [],
+    purchases: [],
+    payments: [],
+    stockAdjustments: []
+  };
+}
+
+let DB = seedData();
+let SESSION = { pickedUserId:null, pinBuffer:'' };
+let CART = []; // {itemId, qty, price}
+let UI = { view:'dashboard', partyFilter:'customer', reportTab:'sales', reportFrom:null, reportTo:null, selectedPartyId:null };
+
+/* ---------------- persistence ---------------- */
+let WARNED_STORAGE = false;
+function saveLocal(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(DB)); }
+  catch(e){
+    if(!WARNED_STORAGE){
+      WARNED_STORAGE = true;
+      setTimeout(()=>toast('This browser can\u2019t auto-save here. Use Settings \u2192 Backup \u2192 Download backup often so you don\u2019t lose data.', true), 300);
+    }
+  }
+}
+function loadLocal(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw){ const parsed = JSON.parse(raw); if(parsed && parsed.business!==undefined){ DB = Object.assign(seedData(), parsed); return true; } }
+  }catch(e){ /* ignore corrupt cache */ }
+  return false;
+}
+function persist(){ saveLocal(); }
+
+function exportBackup(){
+  const blob = new Blob([JSON.stringify(DB,null,2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const stamp = new Date().toISOString().slice(0,16).replace(/[:T]/g,'-');
+  a.href = url; a.download = `counter-backup-${stamp}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+  toast('Backup file downloaded — keep it somewhere safe.');
+}
+function importBackup(file){
+  const reader = new FileReader();
+  reader.onload = e => {
+    try{
+      const parsed = JSON.parse(e.target.result);
+      if(!parsed || !parsed.items){ throw new Error('bad file'); }
+      DB = Object.assign(seedData(), parsed);
+      persist();
+      toast('Backup restored.');
+      closeModal();
+      location.reload();
+    }catch(err){ toast('Could not read that file — is it a Counter backup?', true); }
+  };
+  reader.readAsText(file);
+}
+
+/* ---------------- toast ---------------- */
+function toast(msg, isErr){
+  const wrap = document.getElementById('toast-wrap');
+  const t = document.createElement('div');
+  t.className = 'toast' + (isErr?' err':'');
+  t.textContent = msg;
+  wrap.appendChild(t);
+  setTimeout(()=>t.remove(), 3200);
+}
+
+/* ============================================================
+   LOGIN / SETUP / SESSION
+   ============================================================ */
+function initLogin(){
+  loadLocal();
+  if(!DB.users.length){
+    document.getElementById('setup-block').style.display='block';
+    document.getElementById('pick-block').style.display='none';
+  } else {
+    renderUserPick();
+  }
+  document.getElementById('login-biz-name').textContent = DB.business.name || 'Counter';
+  document.getElementById('login-mark').textContent = initials(DB.business.name || 'C').slice(0,1);
+}
+
+function finishSetup(){
+  const biz = document.getElementById('setup-biz').value.trim();
+  const name = document.getElementById('setup-name').value.trim();
+  const pin = document.getElementById('setup-pin').value.trim();
+  const err = document.getElementById('setup-err');
+  if(!biz || !name || !/^\d{4}$/.test(pin)){ err.textContent = 'Fill every field — PIN must be exactly 4 digits.'; return; }
+  DB.business.name = biz;
+  DB.users.push({ id: uid('u'), name, role:'admin', pin, createdAt: nowISO() });
+  persist();
+  document.getElementById('login-biz-name').textContent = biz;
+  document.getElementById('setup-block').style.display='none';
+  document.getElementById('pick-block').style.display='block';
+  renderUserPick();
+  toast('Shop created. Welcome, ' + name + '.');
+}
+
+function renderUserPick(){
+  const list = document.getElementById('user-pick-list');
+  list.innerHTML = DB.users.map(u => `
+    <button class="user-btn" onclick="APP.pickUser('${u.id}')">
+      <span class="user-avatar">${esc(initials(u.name))}</span>
+      <span>${esc(u.name)}</span>
+      <span class="role-tag">${u.role}</span>
+    </button>`).join('') + `
+    <button class="user-btn" style="justify-content:center;color:var(--text-dim);" onclick="APP.newUserFromLogin()">+ Add user</button>`;
+}
+function newUserFromLogin(){
+  document.getElementById('pick-block').style.display='none';
+  document.getElementById('setup-block').style.display='block';
+  document.getElementById('setup-block').innerHTML = `
+    <div class="setup-form">
+      <label>Name</label><input type="text" id="nu-name">
+      <label>Role</label>
+      <select id="nu-role"><option value="staff">Staff</option><option value="admin">Admin</option></select>
+      <label>Set a 4-digit PIN</label><input type="password" id="nu-pin" maxlength="4" inputmode="numeric">
+    </div>
+    <div class="login-err" id="nu-err"></div>
+    <button class="btn btn-primary" style="width:100%;margin-top:6px;padding:11px;" onclick="APP.addUserFromLogin()">Add user</button>
+    <div class="login-back"><button onclick="APP.backToPick()">← back</button></div>`;
+}
+function addUserFromLogin(){
+  const name = document.getElementById('nu-name').value.trim();
+  const role = document.getElementById('nu-role').value;
+  const pin = document.getElementById('nu-pin').value.trim();
+  const err = document.getElementById('nu-err');
+  if(!name || !/^\d{4}$/.test(pin)){ err.textContent='Name + a 4-digit PIN are required.'; return; }
+  DB.users.push({ id: uid('u'), name, role, pin, createdAt: nowISO() });
+  persist();
+  backToPick();
+}
+function backToPick(){
+  document.getElementById('setup-block').style.display='none';
+  document.getElementById('setup-block').innerHTML = document.getElementById('setup-block').innerHTML; // no-op safe
+  document.getElementById('pick-block').style.display='block';
+  document.getElementById('pin-block').classList.remove('show');
+  renderUserPick();
+}
+function pickUser(id){
+  SESSION.pickedUserId = id; SESSION.pinBuffer='';
+  const u = DB.users.find(x=>x.id===id);
+  document.getElementById('pick-block').style.display='none';
+  document.getElementById('pin-block').classList.add('show');
+  document.getElementById('pin-who').textContent = 'Enter PIN for ' + u.name;
+  document.getElementById('pin-err').textContent='';
+  renderPinDots();
+  const keys = [1,2,3,4,5,6,7,8,9,'⌫',0,'✓'];
+  document.getElementById('pin-keys').innerHTML = keys.map(k=>{
+    if(k==='⌫') return `<button onclick="APP.pinKey('back')">⌫</button>`;
+    if(k==='✓') return `<button onclick="APP.pinKey('go')">✓</button>`;
+    return `<button onclick="APP.pinKey('${k}')">${k}</button>`;
+  }).join('');
+}
+function renderPinDots(){
+  const dots = document.querySelectorAll('#pin-dots span');
+  dots.forEach((d,i)=> d.classList.toggle('filled', i < SESSION.pinBuffer.length));
+}
+function pinKey(k){
+  if(k==='back'){ SESSION.pinBuffer = SESSION.pinBuffer.slice(0,-1); renderPinDots(); return; }
+  if(k==='go'){ tryLogin(); return; }
+  if(SESSION.pinBuffer.length<4){ SESSION.pinBuffer += k; renderPinDots(); }
+  if(SESSION.pinBuffer.length===4) tryLogin();
+}
+function tryLogin(){
+  const u = DB.users.find(x=>x.id===SESSION.pickedUserId);
+  if(u && u.pin === SESSION.pinBuffer){
+    DB.currentUserId = u.id; persist();
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('app').classList.add('show');
+    boot();
+  } else {
+    document.getElementById('pin-err').textContent = 'Incorrect PIN, try again.';
+    SESSION.pinBuffer=''; renderPinDots();
+  }
+}
+function logout(){
+  DB.currentUserId = null; persist();
+  document.getElementById('app').classList.remove('show');
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('pin-block').classList.remove('show');
+  document.getElementById('pick-block').style.display='block';
+  renderUserPick();
+}
+function currentUser(){ return DB.users.find(u=>u.id===DB.currentUserId) || {name:'—',role:'staff'}; }
+function isAdmin(){ return currentUser().role==='admin'; }
+
+/* ============================================================
+   NAV
+   ============================================================ */
+const NAV = [
+  {grp:'Overview', items:[ {id:'dashboard', label:'Dashboard', ic:'◆'} ]},
+  {grp:'Sell', items:[ {id:'billing', label:'New Sale', ic:'₹'}, {id:'sales', label:'Sales History', ic:'≡'} ]},
+  {grp:'Stock', items:[ {id:'items', label:'Items', ic:'▣'}, {id:'purchases', label:'Purchases', ic:'↓'}, {id:'adjustments', label:'Stock Log', ic:'≈'} ]},
+  {grp:'People', items:[ {id:'parties', label:'Customers & Suppliers', ic:'☺'}, {id:'payments', label:'Payments', ic:'⇄'} ]},
+  {grp:'Insights', items:[ {id:'reports', label:'Reports', ic:'▤'} ]},
+  {grp:'', items:[ {id:'settings', label:'Settings', ic:'⚙', adminOnly:true} ]},
+];
+function renderSideNav(){
+  const el = document.getElementById('side-nav');
+  el.innerHTML = NAV.map(g => {
+    if(!g.items.some(it => !it.adminOnly || isAdmin())) return '';
+    return (g.grp?`<div class="grp-label">${g.grp}</div>`:'') + g.items.map(it=>{
+      if(it.adminOnly && !isAdmin()) return '';
+      return `<button class="side-link ${UI.view===it.id?'active':''}" onclick="APP.go('${it.id}')"><span class="ic">${it.ic}</span>${it.label}</button>`;
+    }).join('');
+  }).join('');
+  document.getElementById('side-biz-name').textContent = DB.business.name || 'Counter';
+  document.getElementById('side-user-name').textContent = currentUser().name + ' · ' + currentUser().role;
+}
+function go(view){ UI.view = view; render(); }
+
+function boot(){
+  renderSideNav();
+  render();
+}
+
+/* ============================================================
+   MAIN RENDER ROUTER
+   ============================================================ */
+function render(){
+  renderSideNav();
+  const titles = {
+    dashboard:['Dashboard', 'Today at a glance'],
+    billing:['New Sale', 'Scan or search items to bill a customer'],
+    sales:['Sales History', 'Every invoice you have raised'],
+    items:['Items', 'Your inventory catalogue'],
+    purchases:['Purchases', 'Stock coming into the shop'],
+    adjustments:['Stock Log', 'Manual stock corrections & history'],
+    parties:['Customers & Suppliers', 'People you buy from and sell to'],
+    payments:['Payments', 'Money received and paid out'],
+    reports:['Reports', 'How the business is doing'],
+    settings:['Settings', 'Shop, users, and backups'],
+  };
+  const [t,s] = titles[UI.view] || ['',''];
+  document.getElementById('page-title').textContent = t;
+  document.getElementById('page-sub').textContent = s;
+  document.getElementById('page-actions').innerHTML = '';
+  const c = document.getElementById('content');
+
+  if(UI.view==='settings' && !isAdmin()){
+    c.innerHTML = `<div class="perm-lock">Only an admin can open Settings.</div>`; return;
+  }
+
+  const fns = {
+    dashboard: renderDashboard, billing: renderBilling, sales: renderSales,
+    items: renderItems, purchases: renderPurchases, adjustments: renderAdjustments,
+    parties: renderParties, payments: renderPayments, reports: renderReports, settings: renderSettings
+  };
+  (fns[UI.view] || renderDashboard)();
+}
+
+/* ============================================================
+   HELPERS: stock / money calcs
+   ============================================================ */
+function getItem(id){ return DB.items.find(i=>i.id===id); }
+function getParty(id){ return DB.parties.find(p=>p.id===id); }
+function tracks(it){ return it && it.trackStock!==false; }
+function outOfStock(it){ return tracks(it) && it.stock<=0; }
+function isLow(it){ return tracks(it) && it.stock<=it.lowStockAlert; }
+function availableFor(it){ return tracks(it) ? it.stock : Infinity; }
+function stockText(it){ return tracks(it) ? (it.stock+' '+it.unit+' in stock') : 'Stock not tracked'; }
+function stockStatus(it){
+  if(!tracks(it)) return {label:'Not tracked', cls:''};
+  if(it.stock<=0) return {label:'Out of stock', cls:'badge-out'};
+  if(it.stock<=it.lowStockAlert) return {label:'Low stock', cls:'badge-warn'};
+  return {label:'In stock', cls:'badge-ok'};
+}
+function partyBalance(partyId){
+  // + means party owes shop (receivable); - means shop owes party (payable)
+  let bal = 0;
+  const p = getParty(partyId); if(!p) return 0;
+  bal += Number(p.openingBalance)||0;
+  DB.sales.forEach(s=>{ if(s.partyId===partyId) bal += (s.due||0); });
+  DB.purchases.forEach(pu=>{ if(pu.partyId===partyId) bal -= (pu.due||0); });
+  DB.payments.forEach(pay=>{
+    if(pay.partyId===partyId){ if(pay.type==='in') bal -= pay.amount; else bal += pay.amount; }
+  });
+  return Math.round(bal*100)/100;
+}
+function partyTransactions(partyId){
+  const rows = [];
+  DB.sales.filter(s=>s.partyId===partyId).forEach(s=> rows.push({date:s.date, type:'Sale', ref:s.invoiceNo, amt:s.total, note:`${s.items.length} item(s)`}));
+  DB.purchases.filter(p=>p.partyId===partyId).forEach(p=> rows.push({date:p.date, type:'Purchase', ref:p.billNo, amt:-p.total, note:`${p.items.length} item(s)`}));
+  DB.payments.filter(p=>p.partyId===partyId).forEach(p=> rows.push({date:p.date, type: p.type==='in'?'Payment received':'Payment made', ref:'—', amt: p.type==='in' ? -p.amount : p.amount, note:p.note||''}));
+  rows.sort((a,b)=> new Date(a.date) - new Date(b.date));
+  return rows;
+}
+function totalStockValue(){
+  return DB.items.filter(tracks).reduce((s,it)=> s + it.stock * (Number(it.purchasePrice)||0), 0);
+}
+function todaysSales(){
+  const t = todayISO();
+  return DB.sales.filter(s=>s.date===t).reduce((s,x)=>s+x.total,0);
+}
+function inRange(dateStr, from, to){
+  if(from && dateStr < from) return false;
+  if(to && dateStr > to) return false;
+  return true;
+}
+
+/* ============================================================
+   SVG bar chart (no external libs)
+   ============================================================ */
+function barChart(labels, values, opts){
+  opts = opts || {};
+  const w = opts.w||620, h = opts.h||180, padL=40, padB=26, padT=10;
+  const max = Math.max(1, ...values);
+  const bw = (w-padL-10) / values.length;
+  let bars = '', labs = '';
+  values.forEach((v,i)=>{
+    const bh = (h-padT-padB) * (v/max);
+    const x = padL + i*bw + bw*0.15;
+    const y = h-padB-bh;
+    bars += `<rect x="${x}" y="${y}" width="${bw*0.7}" height="${bh}" rx="3" fill="var(--accent)"></rect>`;
+    labs += `<text x="${x+bw*0.35}" y="${h-8}" font-size="9.5" fill="#6b7280" text-anchor="middle">${esc(labels[i])}</text>`;
+  });
+  const gridY = [0,0.5,1].map(f=>{
+    const y = padT + (h-padT-padB)*(1-f);
+    return `<line x1="${padL}" y1="${y}" x2="${w-10}" y2="${y}" stroke="#EAE5D8" stroke-width="1"></line>
+            <text x="${padL-6}" y="${y+3}" font-size="9" fill="#9aa1ad" text-anchor="end">${Math.round(max*f)}</text>`;
+  }).join('');
+  return `<svg class="chart-svg" viewBox="0 0 ${w} ${h}" width="100%" height="${h}">${gridY}${bars}${labs}</svg>`;
+}
+
+/* ============================================================
+   DASHBOARD
+   ============================================================ */
+function renderDashboard(){
+  const low = DB.items.filter(isLow);
+  const receivable = DB.parties.filter(p=>p.type==='customer').reduce((s,p)=>s+Math.max(0,partyBalance(p.id)),0);
+  const payable = DB.parties.filter(p=>p.type==='supplier').reduce((s,p)=>s+Math.max(0,-partyBalance(p.id)),0);
+
+  document.getElementById('page-actions').innerHTML = `
+    <button class="btn btn-accent" onclick="APP.go('billing')">+ New Sale</button>
+    <button class="btn" onclick="APP.openItemModal()">+ Add Item</button>`;
+
+  // last 7 days sales
+  const days = [...Array(7)].map((_,i)=>{ const d=new Date(); d.setDate(d.getDate()-(6-i)); return d.toISOString().slice(0,10); });
+  const dayVals = days.map(d=> DB.sales.filter(s=>s.date===d).reduce((s,x)=>s+x.total,0));
+  const dayLabs = days.map(d=> new Date(d).toLocaleDateString('en-IN',{weekday:'short'}));
+
+  const recent = [...DB.sales].sort((a,b)=> new Date(b.createdAt)-new Date(a.createdAt)).slice(0,6);
+
+  document.getElementById('content').innerHTML = `
+    <div class="grid g-4">
+      <div class="card stat"><div class="lbl">Today's sales</div><div class="val">${money(todaysSales())}</div><div class="delta">${DB.sales.filter(s=>s.date===todayISO()).length} invoice(s) today</div></div>
+      <div class="card stat ${low.length?'warn':''}"><div class="lbl">Low / out of stock</div><div class="val">${low.length}</div><div class="delta">${DB.items.length} items total</div></div>
+      <div class="card stat"><div class="lbl">To collect (receivable)</div><div class="val">${money(receivable)}</div><div class="delta">from customers</div></div>
+      <div class="card stat"><div class="lbl">To pay (payable)</div><div class="val">${money(payable)}</div><div class="delta">to suppliers</div></div>
+    </div>
+
+    <div class="grid g-2" style="margin-top:16px; align-items:start;">
+      <div class="card">
+        <div style="font-family:var(--serif); font-size:15px; margin-bottom:10px;">Sales, last 7 days</div>
+        ${barChart(dayLabs, dayVals)}
+      </div>
+      <div class="card">
+        <div style="font-family:var(--serif); font-size:15px; margin-bottom:10px; display:flex; justify-content:space-between;">
+          <span>Low stock</span><button class="btn btn-sm" onclick="APP.go('items')">View all</button>
+        </div>
+        ${low.length ? `<div class="tbl-wrap" style="border:none;"><table class="ledger">
+          <tbody>${low.slice(0,6).map(i=>`<tr><td>${esc(i.name)}</td><td class="num" style="text-align:right;">${i.stock} ${esc(i.unit)}</td><td><span class="badge ${stockStatus(i).cls}">${stockStatus(i).label}</span></td></tr>`).join('')}</tbody>
+        </table></div>` : `<div class="empty-state" style="padding:24px;">All items are well stocked.</div>`}
+      </div>
+    </div>
+
+    <div class="section-title">Recent sales <button class="btn btn-sm" onclick="APP.go('sales')">View all</button></div>
+    <div class="tbl-wrap"><table class="ledger">
+      <thead><tr><th>Invoice</th><th>Date</th><th>Customer</th><th style="text-align:right;">Total</th><th>Status</th></tr></thead>
+      <tbody>
+      ${recent.length ? recent.map(s=>`
+        <tr style="cursor:pointer" onclick="APP.viewSale('${s.id}')">
+          <td>${esc(s.invoiceNo)}</td><td>${fmtDate(s.date)}</td>
+          <td>${esc(s.partyId ? (getParty(s.partyId)||{}).name : 'Walk-in')}</td>
+          <td class="num" style="text-align:right;">${money(s.total)}</td>
+          <td><span class="badge ${s.due>0?'badge-due':'badge-ok'}">${s.due>0?'Due '+money(s.due):'Paid'}</span></td>
+        </tr>`).join('') : `<tr><td colspan="5" class="tbl-empty">No sales yet — make your first sale from "New Sale".</td></tr>`}
+      </tbody>
+    </table></div>
+  `;
+}
+
+/* ============================================================
+   ITEMS
+   ============================================================ */
+function renderItems(){
+  document.getElementById('page-actions').innerHTML = `<button class="btn" onclick="APP.openImportModal()">Import CSV</button><button class="btn btn-accent" onclick="APP.openItemModal()">+ Add Item</button>`;
+  const cat = UI.itemCat || '';
+  document.getElementById('content').innerHTML = `
+    <div class="search-scan">
+      <span class="ss-ic">\u2315</span>
+      <input type="text" id="items-search" placeholder="Search or scan an item" autocomplete="off" value="${esc(UI.itemSearch||'')}"
+        oninput="APP.setItemSearch(this.value)" onkeydown="if(event.key==='Enter'){APP.itemsEnter(this.value);}">
+      <button class="ss-btn" onclick="APP.scanForItems()">\u25A6 SCAN</button>
+    </div>
+    <div class="toolbar">
+      <select onchange="APP.setItemCat(this.value)">
+        <option value="">All categories</option>
+        ${DB.categories.map(c=>`<option value="${esc(c)}" ${cat===c?'selected':''}>${esc(c)}</option>`).join('')}
+      </select>
+      <div class="spacer"></div>
+      <span style="font-size:12.5px;color:var(--text-dim)" id="items-count"></span>
+    </div>
+    <div id="items-table"></div>
+  `;
+  renderItemsTable();
+}
+function renderItemsTable(){
+  const q = (UI.itemSearch||'').toLowerCase();
+  const cat = UI.itemCat || '';
+  const rows = DB.items.filter(i => (!q || i.name.toLowerCase().includes(q) || (i.sku||'').toLowerCase().includes(q) || (i.barcode||'').includes(q)) && (!cat || i.category===cat));
+  const cnt=document.getElementById('items-count'); if(cnt) cnt.textContent = rows.length+' item(s) \u00B7 stock value '+money(totalStockValue());
+  const box=document.getElementById('items-table'); if(!box) return;
+  box.innerHTML = `
+    <div class="tbl-wrap"><table class="ledger">
+      <thead><tr><th>Item</th><th>Category</th><th style="text-align:right;">Stock</th><th style="text-align:right;">Purchase \u20B9</th><th style="text-align:right;">Sale \u20B9</th>${DB.business.wholesaleMode?'<th style="text-align:right;">Wholesale</th>':''}<th>Status</th><th></th></tr></thead>
+      <tbody>
+      ${rows.length ? rows.map(i=>{
+        const st = stockStatus(i);
+        return `<tr>
+          <td><div style="font-weight:600;">${esc(i.name)}</div><div style="font-size:11px;color:var(--text-dim);">${esc(i.sku||'')} ${i.barcode?'\u00B7 '+esc(i.barcode):''}</div></td>
+          <td>${esc(i.category)}</td>
+          <td class="num" style="text-align:right;">${tracks(i)? i.stock+' '+esc(i.unit) : '\u2014'}</td>
+          <td class="num" style="text-align:right;">${money(i.purchasePrice)}</td>
+          <td class="num" style="text-align:right;">${money(i.salePrice)}</td>
+          ${DB.business.wholesaleMode?`<td class="num" style="text-align:right;">${i.wholesalePrice?money(i.wholesalePrice)+' @'+i.wholesaleMinQty+'+':'\u2014'}</td>`:''}
+          <td><span class="badge ${st.cls}">${st.label}</span></td>
+          <td style="text-align:right;white-space:nowrap;">
+            ${tracks(i)?`<button class="btn btn-sm" onclick="APP.openStockAdjustModal('${i.id}')">\u00B1 Stock</button>`:''}
+            <button class="btn btn-sm" onclick="APP.openItemModal('${i.id}')">Edit</button>
+          </td>
+        </tr>`;
+      }).join('') : `<tr><td colspan="8" class="tbl-empty">No items match. <button class="btn btn-sm" onclick="APP.openItemModal()">Add an item</button></td></tr>`}
+      </tbody>
+    </table></div>`;
+}
+function setItemSearch(v){ UI.itemSearch=v; renderItemsTable(); }
+function setItemCat(v){ UI.itemCat=v; renderItemsTable(); }
+
+function openItemModal(id, opts){
+  opts = opts || {}; UI.itemModalOpts = opts;
+  const it = id ? getItem(id) : null;
+  const wholesale = DB.business.wholesaleMode;
+  setModal(`
+    <button class="close" onclick="APP.closeModal()">&times;</button>
+    <h3>${it?'Edit item':'Add item'}</h3>
+    <div class="desc">${it?'Update details for this item.':'Add a new product to your inventory.'}</div>
+    <div class="field"><label>Item name</label><input id="f-name" value="${it?esc(it.name):''}" placeholder="e.g. Parle-G 100g"></div>
+    <div class="row2">
+      <div class="field"><label>Category</label>
+        <select id="f-cat">${DB.categories.map(c=>`<option ${it&&it.category===c?'selected':''}>${esc(c)}</option>`).join('')}</select>
+      </div>
+      <div class="field"><label>Unit</label>
+        <select id="f-unit">${DB.units.map(u=>`<option ${it&&it.unit===u?'selected':''}>${esc(u)}</option>`).join('')}</select>
+      </div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>SKU (optional)</label><input id="f-sku" value="${it?esc(it.sku||''):''}"></div>
+      <div class="field"><label>Barcode (optional)</label>
+        <div class="scan-inline">
+          <input id="f-barcode" value="${it?esc(it.barcode||''):esc(opts.barcode||'')}" placeholder="scan or type">
+          <button type="button" class="btn btn-sm" onclick="APP.scanBarcodeField('${it?it.id:''}')">📷 Scan</button>
+        </div>
+      </div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Purchase price (₹)</label><input id="f-pp" type="number" step="0.01" value="${it?it.purchasePrice:''}"></div>
+      <div class="field"><label>Sale price (₹)</label><input id="f-sp" type="number" step="0.01" value="${it?it.salePrice:''}"></div>
+    </div>
+    ${wholesale ? `<div class="row2">
+      <div class="field"><label>Wholesale price (₹)</label><input id="f-wp" type="number" step="0.01" value="${it&&it.wholesalePrice?it.wholesalePrice:''}"></div>
+      <div class="field"><label>Min qty for wholesale</label><input id="f-wq" type="number" value="${it&&it.wholesaleMinQty?it.wholesaleMinQty:''}"></div>
+    </div>` : ''}
+    <div class="row2">
+      <div class="field"><label>Opening / current stock</label><input id="f-stock" type="number" ${it?'':''} value="${it?it.stock:0}" ${it?'disabled':''}></div>
+      <div class="field"><label>Low stock alert below</label><input id="f-low" type="number" value="${it?it.lowStockAlert:DB.settings.lowStockDefault}"></div>
+    </div>
+    <div class="field" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="f-track" style="width:auto;" ${it && it.trackStock===false ? '' : 'checked'}><label style="margin:0;">Track stock for this item (turn off for loose goods or services)</label></div>
+    ${it?'<div class="hint">Use "± Stock" on the item row to change stock quantity, so it stays logged in the stock history.</div>':''}
+    <div class="form-err" id="f-err"></div>
+    <div class="modal-actions">
+      ${it?`<button class="btn btn-danger" style="margin-right:auto;" onclick="APP.deleteItem('${it.id}')">Delete</button>`:''}
+      <button class="btn" onclick="APP.closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="APP.saveItem('${it?it.id:''}')">Save item</button>
+    </div>
+  `);
+}
+function saveItem(id){
+  const name = document.getElementById('f-name').value.trim();
+  const category = document.getElementById('f-cat').value;
+  const unit = document.getElementById('f-unit').value;
+  const sku = document.getElementById('f-sku').value.trim();
+  const barcode = document.getElementById('f-barcode').value.trim();
+  const pp = parseFloat(document.getElementById('f-pp').value)||0;
+  const sp = parseFloat(document.getElementById('f-sp').value)||0;
+  const low = parseInt(document.getElementById('f-low').value)||0;
+  const track = document.getElementById('f-track').checked;
+  const err = document.getElementById('f-err');
+  if(!name || sp<=0){ err.textContent='Item name and a sale price are required.'; return; }
+  let wp=null, wq=null, newItem=null;
+  if(DB.business.wholesaleMode){
+    wp = parseFloat(document.getElementById('f-wp').value)||null;
+    wq = parseInt(document.getElementById('f-wq').value)||null;
+  }
+  if(id){
+    const it = getItem(id);
+    Object.assign(it, {name, category, unit, sku, barcode, purchasePrice:pp, salePrice:sp, lowStockAlert:low, wholesalePrice:wp, wholesaleMinQty:wq, trackStock:track});
+  } else {
+    const stock = parseInt(document.getElementById('f-stock').value)||0;
+    newItem = { id: uid('it'), name, category, unit, sku, barcode, purchasePrice:pp, salePrice:sp, stock, lowStockAlert:low, wholesalePrice:wp, wholesaleMinQty:wq, trackStock:track, createdAt: nowISO() };
+    DB.items.push(newItem);
+  }
+  persist(); closeModal();
+  if(newItem && UI.itemModalOpts && UI.itemModalOpts.fromBilling){
+    UI.view='billing'; render();
+    const r=addToCart(newItem.id,{quiet:true});
+    toast(r.ok ? 'Saved and added to the bill: '+newItem.name : 'Item saved. Add stock (or turn off \u201CTrack stock\u201D) to sell it.', !r.ok);
+  } else { render(); toast('Item saved.'); }
+}
+function deleteItem(id){
+  if(!confirm('Delete this item? This cannot be undone.')) return;
+  DB.items = DB.items.filter(i=>i.id!==id);
+  persist(); closeModal(); render(); toast('Item deleted.');
+}
+
+function openStockAdjustModal(id){
+  const it = getItem(id);
+  setModal(`
+    <button class="close" onclick="APP.closeModal()">&times;</button>
+    <h3>Adjust stock — ${esc(it.name)}</h3>
+    <div class="desc">Current stock: <b>${it.stock} ${esc(it.unit)}</b></div>
+    <div class="row2">
+      <div class="field"><label>Change type</label>
+        <select id="sa-type"><option value="add">Add stock (received / correction)</option><option value="remove">Remove stock (damage / correction)</option></select>
+      </div>
+      <div class="field"><label>Quantity</label><input id="sa-qty" type="number" min="1" value="1"></div>
+    </div>
+    <div class="field"><label>Reason / note</label><input id="sa-note" placeholder="e.g. damaged, recount, return"></div>
+    <div class="form-err" id="sa-err"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="APP.closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="APP.saveStockAdjust('${id}')">Save</button>
+    </div>
+  `);
+}
+function saveStockAdjust(id){
+  const it = getItem(id);
+  const type = document.getElementById('sa-type').value;
+  const qty = parseInt(document.getElementById('sa-qty').value)||0;
+  const note = document.getElementById('sa-note').value.trim();
+  if(qty<=0){ document.getElementById('sa-err').textContent='Enter a valid quantity.'; return; }
+  const change = type==='add' ? qty : -qty;
+  if(type==='remove' && qty>it.stock){ document.getElementById('sa-err').textContent='Cannot remove more than current stock.'; return; }
+  it.stock += change;
+  DB.stockAdjustments.push({ id: uid('adj'), date: todayISO(), itemId:id, qtyChange:change, reason:note||(type==='add'?'Stock added':'Stock removed'), createdBy: currentUser().name, createdAt: nowISO() });
+  persist(); closeModal(); render(); toast('Stock updated.');
+}
+
+/* ============================================================
+   BILLING (POS)
+   ============================================================ */
+function renderBilling(){
+  const q = (UI.posSearch||'').toLowerCase();
+  const filtered = DB.items.filter(i => !q || i.name.toLowerCase().includes(q) || (i.barcode||'').includes(q) || (i.sku||'').toLowerCase().includes(q));
+
+  document.getElementById('content').innerHTML = `
+    <div class="pos-wrap">
+      <div>
+        <div class="search-scan">
+          <span class="ss-ic">\u2315</span>
+          <input id="pos-scan" placeholder="Search or scan an item" autocomplete="off"
+            onkeydown="if(event.key==='Enter'){APP.posScanEnter(this.value); this.value='';}" oninput="APP.setPosSearch(this.value)">
+          <button class="ss-btn" onclick="APP.scanForBilling()">\u25A6 SCAN</button>
+        </div>
+        <div class="pos-grid" id="pos-grid">
+          ${filtered.length ? filtered.map(i=>{
+            const disabled = outOfStock(i);
+            return `<button class="pos-item ${disabled?'disabled':''}" ${disabled?'disabled':''} onclick="APP.addToCart('${i.id}')">
+              <div class="nm">${esc(i.name)}</div>
+              <div class="meta">${stockText(i)}</div>
+              <div class="pr">${money(i.salePrice)}</div>
+            </button>`;
+          }).join('') : `<div class="empty-state">No items found. <a href="#" onclick="APP.openItemModal();return false;">Add an item</a></div>`}
+        </div>
+      </div>
+      <div class="cart-box">
+        <h4>Cart <span style="font-size:12px;color:var(--text-dim);font-weight:400;">${CART.length} item(s)</span></h4>
+        <div id="cart-lines">${renderCartLines()}</div>
+        <div class="field" style="margin-top:10px;">
+          <label>Customer (optional)</label>
+          <select id="cart-party" onchange="APP.render()">
+            <option value="">Walk-in customer</option>
+            ${DB.parties.filter(p=>p.type==='customer').map(p=>`<option value="${p.id}" ${UI.cartPartyId===p.id?'selected':''}>${esc(p.name)}</option>`).join('')}
+          </select>
+        </div>
+        ${renderCartTotals()}
+      </div>
+    </div>
+  `;
+  const partySel = document.getElementById('cart-party');
+  if(partySel) partySel.onchange = (e)=>{ UI.cartPartyId = e.target.value || null; renderBilling(); };
+  const scanInput = document.getElementById('pos-scan');
+  if(scanInput) scanInput.value = UI.posSearch||'';
+}
+function setPosSearch(v){ UI.posSearch=v; const grid=document.getElementById('pos-grid'); if(grid){ /* light rerender only grid */ } renderBillingGridOnly(); }
+function renderBillingGridOnly(){
+  const q = (UI.posSearch||'').toLowerCase();
+  const filtered = DB.items.filter(i => !q || i.name.toLowerCase().includes(q) || (i.barcode||'').includes(q) || (i.sku||'').toLowerCase().includes(q));
+  const grid = document.getElementById('pos-grid');
+  if(!grid) return;
+  grid.innerHTML = filtered.length ? filtered.map(i=>{
+    const disabled = outOfStock(i);
+    return `<button class="pos-item ${disabled?'disabled':''}" ${disabled?'disabled':''} onclick="APP.addToCart('${i.id}')">
+      <div class="nm">${esc(i.name)}</div><div class="meta">${stockText(i)}</div><div class="pr">${money(i.salePrice)}</div>
+    </button>`;
+  }).join('') : `<div class="empty-state">No items found.</div>`;
+}
+function posScanEnter(val){
+  val = String(val||'').trim(); if(!val) return;
+  const it = findItemByCode(val) || DB.items.find(i=>i.name.toLowerCase()===val.toLowerCase());
+  if(it){
+    const r = addToCart(it.id); UI.posSearch=''; renderBillingGridOnly();
+    if(r.ok){ beep(); toast('Added: '+it.name); } else beepBad();
+  }
+  else if(/^\d{6,}$/.test(val)){
+    UI.posSearch=''; renderBillingGridOnly(); beepBad();
+    if(confirm('No item has barcode '+val+'.\nAdd it as a new item now?')) openItemModal(null,{barcode:val, fromBilling:true});
+  }
+  else { UI.posSearch = val; renderBillingGridOnly(); toast('No exact match \u2014 showing search results.'); }
+}
+function addToCart(itemId, opts){
+  opts = opts || {};
+  const it = getItem(itemId);
+  const fail = msg => { if(!opts.quiet) toast(msg, true); return {ok:false, msg}; };
+  if(!it) return fail('Item not found.');
+  if(outOfStock(it)) return fail(it.name+' is out of stock.');
+  let line = CART.find(c=>c.itemId===itemId);
+  if(line){
+    if(line.qty+1 > availableFor(it)) return fail('Only '+it.stock+' '+it.unit+' of '+it.name+' in stock.');
+    line.qty += 1;
+  } else { line = { itemId, qty:1, price:it.salePrice }; CART.push(line); }
+  line.price = (DB.business.wholesaleMode && it.wholesalePrice && it.wholesaleMinQty && line.qty>=it.wholesaleMinQty) ? it.wholesalePrice : it.salePrice;
+  refreshCartTotals();
+  return {ok:true, qty:line.qty};
+}
+function refreshCartTotals(){
+  const box = document.querySelector('.cart-box');
+  if(!box) return;
+  document.getElementById('cart-lines').innerHTML = renderCartLines();
+  const totWrap = box.querySelector('.cart-totals');
+  if(totWrap) totWrap.outerHTML = renderCartTotals();
+  const h4 = box.querySelector('h4 span');
+  if(h4) h4.textContent = CART.length + ' item(s)';
+}
+function renderCartLines(){
+  if(!CART.length) return `<div class="cart-empty">Cart is empty — tap an item to add it.</div>`;
+  return CART.map((c,idx)=>{
+    const it = getItem(c.itemId);
+    return `<div class="cart-line">
+      <div class="nm">${esc(it?it.name:'—')}<div style="font-size:11px;color:var(--text-dim);">${money(c.price)} each</div></div>
+      <div class="qty-ctl">
+        <button onclick="APP.cartQty(${idx},-1)">−</button>
+        <input value="${c.qty}" onchange="APP.cartQtySet(${idx}, this.value)">
+        <button onclick="APP.cartQty(${idx},1)">+</button>
+      </div>
+      <div class="amt num">${money(c.qty*c.price)}</div>
+      <button class="rm" onclick="APP.cartRemove(${idx})">&times;</button>
+    </div>`;
+  }).join('');
+}
+function cartQty(idx, delta){
+  const c = CART[idx]; const it = getItem(c.itemId);
+  const nq = c.qty+delta;
+  if(nq<=0){ CART.splice(idx,1); } else if(nq>availableFor(it)){ toast('Not enough stock.', true); return; } else { c.qty=nq; }
+  refreshCartTotals();
+}
+function cartQtySet(idx, val){
+  const c = CART[idx]; const it = getItem(c.itemId);
+  let nq = parseInt(val)||0;
+  if(nq<=0){ CART.splice(idx,1); }
+  else if(nq>availableFor(it)){ toast('Not enough stock — set to max available.', true); c.qty=it.stock; }
+  else c.qty=nq;
+  refreshCartTotals();
+}
+function cartRemove(idx){ CART.splice(idx,1); refreshCartTotals(); }
+function cartSubtotal(){ return CART.reduce((s,c)=>s+c.qty*c.price,0); }
+function renderCartTotals(){
+  const sub = cartSubtotal();
+  const disc = UI.cartDiscount||0;
+  const total = Math.max(0, sub-disc);
+  const paid = UI.cartPaid==null ? total : UI.cartPaid;
+  const due = Math.max(0, total-paid);
+  return `<div class="cart-totals">
+    <div class="cart-tot-row"><span>Subtotal</span><span class="num">${money(sub)}</span></div>
+    <div class="field" style="margin:8px 0 4px;"><label>Discount (₹)</label><input type="number" min="0" value="${disc}" onchange="APP.setDiscount(this.value)"></div>
+    <div class="cart-tot-row grand"><span>Total</span><span class="num">${money(total)}</span></div>
+    <div class="field" style="margin:10px 0 4px;"><label>Payment mode</label>
+      <select id="pay-mode">
+        <option ${UI.cartMode==='Cash'||!UI.cartMode?'selected':''}>Cash</option>
+        <option ${UI.cartMode==='UPI'?'selected':''}>UPI</option>
+        <option ${UI.cartMode==='Card'?'selected':''}>Card</option>
+        <option ${UI.cartMode==='Credit'?'selected':''}>Credit (pay later)</option>
+      </select>
+    </div>
+    <div class="field"><label>Amount received (₹)</label><input type="number" min="0" id="pay-amt" value="${paid.toFixed(2)}" onchange="APP.setPaid(this.value)"></div>
+    ${due>0?`<div class="cart-tot-row" style="color:var(--rust);"><span>Balance due</span><span class="num">${money(due)}</span></div>`:''}
+    <button class="btn btn-accent" style="width:100%;margin-top:10px;padding:11px;" ${!CART.length?'disabled':''} onclick="APP.completeSale()">Complete sale</button>
+  </div>`;
+}
+function setDiscount(v){ UI.cartDiscount = parseFloat(v)||0; UI.cartPaid=null; refreshCartTotals(); }
+function setPaid(v){ UI.cartPaid = parseFloat(v)||0; refreshCartTotals(); }
+
+function completeSale(){
+  if(!CART.length) return;
+  const sub = cartSubtotal();
+  const disc = UI.cartDiscount||0;
+  const total = Math.max(0, sub-disc);
+  const mode = document.getElementById('pay-mode') ? document.getElementById('pay-mode').value : 'Cash';
+  let paid = UI.cartPaid==null ? total : UI.cartPaid;
+  if(mode==='Credit' && UI.cartPaid==null) paid = 0;
+  paid = Math.min(paid, total);
+  const due = Math.max(0, total-paid);
+
+  const invNo = DB.settings.invoicePrefix + String(DB.settings.nextInvoiceNo).padStart(4,'0');
+  const sale = {
+    id: uid('sale'), invoiceNo: invNo, date: todayISO(), createdAt: nowISO(),
+    partyId: UI.cartPartyId || null,
+    items: CART.map(c=>({ itemId:c.itemId, name:getItem(c.itemId).name, qty:c.qty, price:c.price, total:c.qty*c.price })),
+    subtotal: sub, discount: disc, total, paid, due, mode, createdBy: currentUser().name
+  };
+  CART.forEach(c=>{ const it=getItem(c.itemId); if(tracks(it)) it.stock -= c.qty; });
+  DB.sales.push(sale);
+  DB.settings.nextInvoiceNo++;
+  if(paid>0){
+    DB.payments.push({ id:uid('pay'), date: todayISO(), partyId: sale.partyId, type:'in', amount:paid, mode, note:'Sale '+invNo, linkedSaleId: sale.id, createdBy: currentUser().name, createdAt: nowISO() });
+  }
+  persist();
+  CART = []; UI.cartDiscount=0; UI.cartPaid=null; UI.cartPartyId=null;
+  closeModal();
+  openInvoicePreview(sale.id, true);
+  render();
+}
+
+/* ============================================================
+   SALES HISTORY
+   ============================================================ */
+function renderSales(){
+  const from = UI.salesFrom||''; const to = UI.salesTo||'';
+  let rows = [...DB.sales].filter(s=>inRange(s.date, from, to)).sort((a,b)=> new Date(b.createdAt)-new Date(a.createdAt));
+  document.getElementById('content').innerHTML = `
+    <div class="toolbar">
+      <input type="date" value="${from}" onchange="UI.salesFrom=this.value; APP.render()">
+      <span style="color:var(--text-dim);font-size:12px;">to</span>
+      <input type="date" value="${to}" onchange="UI.salesTo=this.value; APP.render()">
+      <div class="spacer"></div>
+      <span style="font-size:12.5px;color:var(--text-dim)">${rows.length} invoice(s) · ${money(rows.reduce((s,x)=>s+x.total,0))}</span>
+    </div>
+    <div class="tbl-wrap"><table class="ledger">
+      <thead><tr><th>Invoice</th><th>Date</th><th>Customer</th><th style="text-align:right;">Total</th><th style="text-align:right;">Paid</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+      ${rows.length ? rows.map(s=>`
+        <tr>
+          <td>${esc(s.invoiceNo)}</td><td>${fmtDate(s.date)}</td>
+          <td>${esc(s.partyId ? (getParty(s.partyId)||{name:'—'}).name : 'Walk-in')}</td>
+          <td class="num" style="text-align:right;">${money(s.total)}</td>
+          <td class="num" style="text-align:right;">${money(s.paid)}</td>
+          <td><span class="badge ${s.due>0?'badge-due':'badge-ok'}">${s.due>0?'Due '+money(s.due):'Paid'}</span></td>
+          <td style="text-align:right;white-space:nowrap;">
+            <button class="btn btn-sm" onclick="APP.viewSale('${s.id}')">View</button>
+            ${s.due>0?`<button class="btn btn-sm" onclick="APP.collectDue('${s.id}')">Collect</button>`:''}
+          </td>
+        </tr>`).join('') : `<tr><td colspan="7" class="tbl-empty">No sales in this range.</td></tr>`}
+      </tbody>
+    </table></div>
+  `;
+}
+function viewSale(id){ openInvoicePreview(id, false); }
+function collectDue(id){
+  const s = DB.sales.find(x=>x.id===id);
+  setModal(`
+    <button class="close" onclick="APP.closeModal()">&times;</button>
+    <h3>Collect payment — ${esc(s.invoiceNo)}</h3>
+    <div class="desc">Balance due: <b>${money(s.due)}</b></div>
+    <div class="field"><label>Amount received (₹)</label><input id="cd-amt" type="number" max="${s.due}" value="${s.due}"></div>
+    <div class="field"><label>Mode</label><select id="cd-mode"><option>Cash</option><option>UPI</option><option>Card</option></select></div>
+    <div class="form-err" id="cd-err"></div>
+    <div class="modal-actions"><button class="btn" onclick="APP.closeModal()">Cancel</button><button class="btn btn-primary" onclick="APP.saveCollectDue('${id}')">Record payment</button></div>
+  `);
+}
+function saveCollectDue(id){
+  const s = DB.sales.find(x=>x.id===id);
+  const amt = parseFloat(document.getElementById('cd-amt').value)||0;
+  const mode = document.getElementById('cd-mode').value;
+  if(amt<=0 || amt>s.due){ document.getElementById('cd-err').textContent='Enter an amount up to '+money(s.due)+'.'; return; }
+  s.paid += amt; s.due -= amt;
+  DB.payments.push({ id:uid('pay'), date: todayISO(), partyId: s.partyId, type:'in', amount:amt, mode, note:'Due collected for '+s.invoiceNo, linkedSaleId: s.id, createdBy: currentUser().name, createdAt: nowISO() });
+  persist(); closeModal(); render(); toast('Payment recorded.');
+}
+
+function openInvoicePreview(saleId, justCreated){
+  const s = DB.sales.find(x=>x.id===saleId);
+  const party = s.partyId ? getParty(s.partyId) : null;
+  const html = `
+    <div style="max-width:520px;margin:0 auto;font-family:var(--sans);">
+      <div style="text-align:center;margin-bottom:14px;">
+        <div style="font-family:var(--serif);font-size:20px;">${esc(DB.business.name||'Counter')}</div>
+        <div style="font-size:11.5px;color:#666;">${esc(DB.business.address||'')} ${DB.business.phone?'· '+esc(DB.business.phone):''}</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:12.5px;border-top:1px solid #ddd;border-bottom:1px solid #ddd;padding:8px 0;margin-bottom:10px;">
+        <div><b>${esc(s.invoiceNo)}</b><br>${fmtDate(s.date)}</div>
+        <div style="text-align:right;">${party?esc(party.name):'Walk-in customer'}<br>${party&&party.phone?esc(party.phone):''}</div>
+      </div>
+      <table style="width:100%;font-size:12.5px;border-collapse:collapse;">
+        <thead><tr style="border-bottom:1px solid #ccc;"><th style="text-align:left;padding:4px 0;">Item</th><th style="text-align:right;">Qty</th><th style="text-align:right;">Price</th><th style="text-align:right;">Amt</th></tr></thead>
+        <tbody>${s.items.map(i=>`<tr><td style="padding:4px 0;">${esc(i.name)}</td><td style="text-align:right;">${i.qty}</td><td style="text-align:right;">${money(i.price)}</td><td style="text-align:right;">${money(i.total)}</td></tr>`).join('')}</tbody>
+      </table>
+      <div style="border-top:1px solid #ccc;margin-top:8px;padding-top:8px;font-size:12.5px;">
+        <div style="display:flex;justify-content:space-between;"><span>Subtotal</span><span>${money(s.subtotal)}</span></div>
+        <div style="display:flex;justify-content:space-between;"><span>Discount</span><span>-${money(s.discount)}</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:700;margin-top:4px;"><span>Total</span><span>${money(s.total)}</span></div>
+        <div style="display:flex;justify-content:space-between;"><span>Paid (${esc(s.mode)})</span><span>${money(s.paid)}</span></div>
+        ${s.due>0?`<div style="display:flex;justify-content:space-between;color:#B4532A;font-weight:700;"><span>Due</span><span>${money(s.due)}</span></div>`:''}
+      </div>
+      <div style="text-align:center;margin-top:16px;font-size:11px;color:#888;">Thank you for shopping with us.</div>
+    </div>`;
+  document.getElementById('print-area').innerHTML = html;
+  setModal(`
+    <button class="close" onclick="APP.closeModal()">&times;</button>
+    <h3>${justCreated?'Sale complete':'Invoice'} — ${esc(s.invoiceNo)}</h3>
+    <div class="desc">${justCreated?'Stock has been updated automatically.':''}</div>
+    <div style="border:1px solid var(--rule);border-radius:10px;padding:14px;max-height:50vh;overflow-y:auto;">${html}</div>
+    <div class="modal-actions">
+      <button class="btn" onclick="APP.closeModal()">Close</button>
+      <button class="btn" onclick="APP.shareWhatsApp('${s.id}')">Share on WhatsApp</button>
+      <button class="btn btn-primary" onclick="window.print()">Print invoice</button>
+    </div>
+  `);
+}
+
+/* ============================================================
+   PURCHASES
+   ============================================================ */
+let PCART = [];
+function renderPurchases(){
+  document.getElementById('page-actions').innerHTML = `<button class="btn btn-accent" onclick="APP.openPurchaseModal()">+ New Purchase</button>`;
+  const from = UI.purFrom||''; const to = UI.purTo||'';
+  let rows = [...DB.purchases].filter(p=>inRange(p.date, from, to)).sort((a,b)=> new Date(b.createdAt)-new Date(a.createdAt));
+  document.getElementById('content').innerHTML = `
+    <div class="toolbar">
+      <input type="date" value="${from}" onchange="UI.purFrom=this.value; APP.render()">
+      <span style="color:var(--text-dim);font-size:12px;">to</span>
+      <input type="date" value="${to}" onchange="UI.purTo=this.value; APP.render()">
+      <div class="spacer"></div>
+      <span style="font-size:12.5px;color:var(--text-dim)">${rows.length} purchase(s) · ${money(rows.reduce((s,x)=>s+x.total,0))}</span>
+    </div>
+    <div class="tbl-wrap"><table class="ledger">
+      <thead><tr><th>Bill No</th><th>Date</th><th>Supplier</th><th style="text-align:right;">Total</th><th style="text-align:right;">Paid</th><th>Status</th></tr></thead>
+      <tbody>
+      ${rows.length ? rows.map(p=>`
+        <tr><td>${esc(p.billNo)}</td><td>${fmtDate(p.date)}</td><td>${esc(p.partyId?(getParty(p.partyId)||{name:'—'}).name:'—')}</td>
+        <td class="num" style="text-align:right;">${money(p.total)}</td><td class="num" style="text-align:right;">${money(p.paid)}</td>
+        <td><span class="badge ${p.due>0?'badge-due':'badge-ok'}">${p.due>0?'Due '+money(p.due):'Paid'}</span></td></tr>`).join('')
+        : `<tr><td colspan="6" class="tbl-empty">No purchases recorded yet.</td></tr>`}
+      </tbody>
+    </table></div>
+  `;
+}
+function openPurchaseModal(){
+  PCART = [];
+  setModal(`
+    <button class="close" onclick="APP.closeModal()">&times;</button>
+    <h3>New purchase (stock in)</h3>
+    <div class="desc">Record stock received from a supplier.</div>
+    <div class="row2">
+      <div class="field"><label>Supplier</label>
+        <select id="pu-party"><option value="">— none —</option>${DB.parties.filter(p=>p.type==='supplier').map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('')}</select>
+      </div>
+      <div class="field"><label>Bill date</label><input id="pu-date" type="date" value="${todayISO()}"></div>
+    </div>
+    <div class="field"><label>Add item</label>
+      <select id="pu-item-pick">${DB.items.map(i=>`<option value="${i.id}">${esc(i.name)} (${i.stock} ${esc(i.unit)})</option>`).join('')}</select>
+    </div>
+    <div class="row3">
+      <div class="field"><label>Qty</label><input id="pu-qty" type="number" min="1" value="1"></div>
+      <div class="field"><label>Cost price ₹</label><input id="pu-price" type="number" step="0.01" value="0"></div>
+      <div class="field" style="display:flex;align-items:flex-end;"><button class="btn" style="width:100%;" onclick="APP.pcartAdd()">+ Add to bill</button></div>
+    </div>
+    <div id="pu-lines">${renderPCartLines()}</div>
+    <div class="row2">
+      <div class="field"><label>Amount paid now ₹</label><input id="pu-paid" type="number" step="0.01" value="0"></div>
+      <div class="field" style="display:flex;align-items:flex-end;"><div style="font-size:13px;">Total: <b id="pu-total">${money(0)}</b></div></div>
+    </div>
+    <div class="form-err" id="pu-err"></div>
+    <div class="modal-actions"><button class="btn" onclick="APP.closeModal()">Cancel</button><button class="btn btn-primary" onclick="APP.savePurchase()">Save purchase</button></div>
+  `);
+}
+function pcartAdd(){
+  const itemId = document.getElementById('pu-item-pick').value;
+  const qty = parseInt(document.getElementById('pu-qty').value)||0;
+  const price = parseFloat(document.getElementById('pu-price').value)||0;
+  if(!itemId || qty<=0){ return; }
+  PCART.push({itemId, qty, price});
+  document.getElementById('pu-lines').innerHTML = renderPCartLines();
+  document.getElementById('pu-total').textContent = money(PCART.reduce((s,c)=>s+c.qty*c.price,0));
+}
+function pcartRemove(idx){ PCART.splice(idx,1); document.getElementById('pu-lines').innerHTML = renderPCartLines(); document.getElementById('pu-total').textContent = money(PCART.reduce((s,c)=>s+c.qty*c.price,0)); }
+function renderPCartLines(){
+  if(!PCART.length) return `<div class="cart-empty">No items added to this bill yet.</div>`;
+  return `<div class="tbl-wrap" style="margin:10px 0;"><table class="ledger"><tbody>
+    ${PCART.map((c,idx)=>`<tr><td>${esc(getItem(c.itemId).name)}</td><td class="num" style="text-align:right;">${c.qty} × ${money(c.price)}</td><td class="num" style="text-align:right;">${money(c.qty*c.price)}</td><td style="text-align:right;"><button class="rm" onclick="APP.pcartRemove(${idx})">&times;</button></td></tr>`).join('')}
+  </tbody></table></div>`;
+}
+function savePurchase(){
+  if(!PCART.length){ document.getElementById('pu-err').textContent='Add at least one item.'; return; }
+  const partyId = document.getElementById('pu-party').value || null;
+  const date = document.getElementById('pu-date').value || todayISO();
+  const paidInput = parseFloat(document.getElementById('pu-paid').value)||0;
+  const total = PCART.reduce((s,c)=>s+c.qty*c.price,0);
+  const paid = Math.min(paidInput, total);
+  const due = total-paid;
+  const billNo = DB.settings.billPrefix + String(DB.settings.nextBillNo).padStart(4,'0');
+  const purchase = { id: uid('pur'), billNo, date, createdAt: nowISO(), partyId,
+    items: PCART.map(c=>({itemId:c.itemId, name:getItem(c.itemId).name, qty:c.qty, price:c.price, total:c.qty*c.price})),
+    total, paid, due, createdBy: currentUser().name };
+  PCART.forEach(c=>{ const it=getItem(c.itemId); it.stock += c.qty; it.purchasePrice = c.price; });
+  DB.purchases.push(purchase); DB.settings.nextBillNo++;
+  if(paid>0) DB.payments.push({ id:uid('pay'), date, partyId, type:'out', amount:paid, mode:'Cash', note:'Purchase '+billNo, linkedPurchaseId:purchase.id, createdBy: currentUser().name, createdAt: nowISO() });
+  persist(); closeModal(); render(); toast('Purchase recorded — stock updated.');
+}
+
+/* ============================================================
+   STOCK LOG
+   ============================================================ */
+function renderAdjustments(){
+  const rows = [...DB.stockAdjustments].sort((a,b)=> new Date(b.createdAt)-new Date(a.createdAt));
+  document.getElementById('content').innerHTML = `
+    <div class="tbl-wrap"><table class="ledger">
+      <thead><tr><th>Date</th><th>Item</th><th style="text-align:right;">Change</th><th>Reason</th><th>By</th></tr></thead>
+      <tbody>${rows.length ? rows.map(a=>{
+        const it = getItem(a.itemId);
+        return `<tr><td>${fmtDate(a.date)}</td><td>${esc(it?it.name:'(deleted item)')}</td>
+        <td class="num" style="text-align:right;color:${a.qtyChange<0?'var(--rust)':'var(--accent)'}">${a.qtyChange>0?'+':''}${a.qtyChange}</td>
+        <td>${esc(a.reason)}</td><td>${esc(a.createdBy)}</td></tr>`;
+      }).join('') : `<tr><td colspan="5" class="tbl-empty">No manual stock changes yet.</td></tr>`}</tbody>
+    </table></div>
+  `;
+}
+
+/* ============================================================
+   PARTIES (customers & suppliers)
+   ============================================================ */
+function renderParties(){
+  document.getElementById('page-actions').innerHTML = `<button class="btn btn-accent" onclick="APP.openPartyModal()">+ Add ${UI.partyFilter==='supplier'?'Supplier':'Customer'}</button>`;
+  const list = DB.parties.filter(p=>p.type===UI.partyFilter);
+  document.getElementById('content').innerHTML = `
+    <div class="tabs">
+      <button class="tab ${UI.partyFilter==='customer'?'active':''}" onclick="UI.partyFilter='customer'; APP.render()">Customers</button>
+      <button class="tab ${UI.partyFilter==='supplier'?'active':''}" onclick="UI.partyFilter='supplier'; APP.render()">Suppliers</button>
+    </div>
+    <div class="tbl-wrap"><table class="ledger">
+      <thead><tr><th>Name</th><th>Phone</th><th style="text-align:right;">Balance</th><th></th></tr></thead>
+      <tbody>${list.length ? list.map(p=>{
+        const bal = partyBalance(p.id);
+        const label = UI.partyFilter==='customer' ? (bal>0?'owes you':'in credit') : (bal<0?'you owe':'settled');
+        return `<tr style="cursor:pointer" onclick="APP.openLedger('${p.id}')">
+          <td>${esc(p.name)}</td><td>${esc(p.phone||'—')}</td>
+          <td class="num" style="text-align:right;" class="${bal>0?'bal-pos':'bal-neg'}">${money(Math.abs(bal))} <span style="font-size:11px;color:var(--text-dim);">${label}</span></td>
+          <td style="text-align:right;"><button class="btn btn-sm" onclick="event.stopPropagation();APP.openPartyModal('${p.id}')">Edit</button></td>
+        </tr>`;
+      }).join('') : `<tr><td colspan="4" class="tbl-empty">No ${UI.partyFilter}s yet.</td></tr>`}</tbody>
+    </table></div>
+  `;
+}
+function openPartyModal(id){
+  const p = id ? getParty(id) : null;
+  setModal(`
+    <button class="close" onclick="APP.closeModal()">&times;</button>
+    <h3>${p?'Edit':'Add'} ${UI.partyFilter}</h3>
+    <div class="field"><label>Name</label><input id="pt-name" value="${p?esc(p.name):''}"></div>
+    <div class="row2">
+      <div class="field"><label>Phone</label><input id="pt-phone" value="${p?esc(p.phone||''):''}"></div>
+      <div class="field"><label>Opening balance (₹)</label><input id="pt-bal" type="number" value="${p?p.openingBalance:0}" ${p?'disabled':''}></div>
+    </div>
+    <div class="field"><label>Address (optional)</label><textarea id="pt-addr">${p?esc(p.address||''):''}</textarea></div>
+    <div class="form-err" id="pt-err"></div>
+    <div class="modal-actions">
+      ${p?`<button class="btn btn-danger" style="margin-right:auto;" onclick="APP.deleteParty('${p.id}')">Delete</button>`:''}
+      <button class="btn" onclick="APP.closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="APP.saveParty('${p?p.id:''}')">Save</button>
+    </div>
+  `);
+}
+function saveParty(id){
+  const name = document.getElementById('pt-name').value.trim();
+  const phone = document.getElementById('pt-phone').value.trim();
+  const addr = document.getElementById('pt-addr').value.trim();
+  if(!name){ document.getElementById('pt-err').textContent='Name is required.'; return; }
+  if(id){ Object.assign(getParty(id), {name, phone, address:addr}); }
+  else {
+    const bal = parseFloat(document.getElementById('pt-bal').value)||0;
+    DB.parties.push({ id: uid('pt'), name, type: UI.partyFilter, phone, address:addr, openingBalance: bal, createdAt: nowISO() });
+  }
+  persist(); closeModal(); render(); toast('Saved.');
+}
+function deleteParty(id){
+  if(!confirm('Delete this contact? Past transactions stay in history.')) return;
+  DB.parties = DB.parties.filter(p=>p.id!==id); persist(); closeModal(); render();
+}
+function openLedger(id){
+  UI.selectedPartyId = id; UI.view='partyLedger'; renderPartyLedger();
+}
+function renderPartyLedger(){
+  const p = getParty(UI.selectedPartyId);
+  if(!p){ UI.view='parties'; render(); return; }
+  const bal = partyBalance(p.id);
+  const rows = partyTransactions(p.id);
+  document.getElementById('page-title').textContent = p.name;
+  document.getElementById('page-sub').textContent = (p.type==='customer'?'Customer':'Supplier') + (p.phone?' · '+p.phone:'');
+  document.getElementById('page-actions').innerHTML = `
+    <button class="btn" onclick="UI.view='parties'; APP.render()">← Back</button>
+    <button class="btn btn-accent" onclick="APP.openPaymentModal('${p.id}')">Record payment</button>`;
+  document.getElementById('content').innerHTML = `
+    <div class="ledger-head">
+      <div class="ledger-avatar">${esc(initials(p.name))}</div>
+      <div>
+        <div style="font-family:var(--serif);font-size:17px;">${esc(p.name)}</div>
+        <div class="${bal>0?'bal-pos':'bal-neg'}">${bal===0?'Settled up':(bal>0? (p.type==='customer'?'Owes you '+money(bal):'You owe '+money(bal)) : (p.type==='customer'?'In credit '+money(-bal):'Settled, credit '+money(-bal)))}</div>
+      </div>
+    </div>
+    <div class="tbl-wrap"><table class="ledger">
+      <thead><tr><th>Date</th><th>Type</th><th>Ref</th><th>Note</th><th style="text-align:right;">Amount</th></tr></thead>
+      <tbody>${rows.length ? rows.map(r=>`
+        <tr><td>${fmtDate(r.date)}</td><td>${esc(r.type)}</td><td>${esc(r.ref)}</td><td>${esc(r.note)}</td>
+        <td class="num" style="text-align:right;color:${r.amt>=0?'var(--rust)':'var(--accent)'}">${r.amt>=0?'+':''}${money(r.amt)}</td></tr>`).join('')
+        : `<tr><td colspan="5" class="tbl-empty">No transactions yet with ${esc(p.name)}.</td></tr>`}</tbody>
+    </table></div>
+  `;
+}
+
+/* ============================================================
+   PAYMENTS
+   ============================================================ */
+function renderPayments(){
+  document.getElementById('page-actions').innerHTML = `<button class="btn btn-accent" onclick="APP.openPaymentModal()">+ Record payment</button>`;
+  const rows = [...DB.payments].sort((a,b)=> new Date(b.createdAt)-new Date(a.createdAt));
+  document.getElementById('content').innerHTML = `
+    <div class="tbl-wrap"><table class="ledger">
+      <thead><tr><th>Date</th><th>Party</th><th>Direction</th><th>Mode</th><th>Note</th><th style="text-align:right;">Amount</th></tr></thead>
+      <tbody>${rows.length ? rows.map(p=>`
+        <tr><td>${fmtDate(p.date)}</td><td>${esc(p.partyId?(getParty(p.partyId)||{name:'—'}).name:'Walk-in')}</td>
+        <td><span class="badge ${p.type==='in'?'badge-ok':'badge-warn'}">${p.type==='in'?'Received':'Paid'}</span></td>
+        <td>${esc(p.mode)}</td><td>${esc(p.note||'')}</td>
+        <td class="num" style="text-align:right;">${money(p.amount)}</td></tr>`).join('')
+        : `<tr><td colspan="6" class="tbl-empty">No payments recorded yet.</td></tr>`}</tbody>
+    </table></div>
+  `;
+}
+function openPaymentModal(partyId){
+  setModal(`
+    <button class="close" onclick="APP.closeModal()">&times;</button>
+    <h3>Record a payment</h3>
+    <div class="row2">
+      <div class="field"><label>Party</label>
+        <select id="pm-party">${DB.parties.map(p=>`<option value="${p.id}" ${partyId===p.id?'selected':''}>${esc(p.name)} (${p.type})</option>`).join('')}</select>
+      </div>
+      <div class="field"><label>Direction</label>
+        <select id="pm-dir"><option value="in">Received (money in)</option><option value="out">Paid (money out)</option></select>
+      </div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Amount ₹</label><input id="pm-amt" type="number" step="0.01"></div>
+      <div class="field"><label>Mode</label><select id="pm-mode"><option>Cash</option><option>UPI</option><option>Card</option><option>Bank Transfer</option></select></div>
+    </div>
+    <div class="field"><label>Note (optional)</label><input id="pm-note"></div>
+    <div class="form-err" id="pm-err"></div>
+    <div class="modal-actions"><button class="btn" onclick="APP.closeModal()">Cancel</button><button class="btn btn-primary" onclick="APP.savePayment()">Save</button></div>
+  `);
+}
+function savePayment(){
+  const partyId = document.getElementById('pm-party').value;
+  const type = document.getElementById('pm-dir').value;
+  const amount = parseFloat(document.getElementById('pm-amt').value)||0;
+  const mode = document.getElementById('pm-mode').value;
+  const note = document.getElementById('pm-note').value.trim();
+  if(!partyId || amount<=0){ document.getElementById('pm-err').textContent='Choose a party and a valid amount.'; return; }
+  DB.payments.push({ id:uid('pay'), date: todayISO(), partyId, type, amount, mode, note, createdBy: currentUser().name, createdAt: nowISO() });
+  persist(); closeModal(); render(); toast('Payment recorded.');
+}
+
+/* ============================================================
+   REPORTS
+   ============================================================ */
+function renderReports(){
+  const tab = UI.reportTab || 'sales';
+  const from = UI.reportFrom || '';
+  const to = UI.reportTo || '';
+  document.getElementById('content').innerHTML = `
+    <div class="tabs">
+      ${['sales','purchases','profit','stock','outstanding'].map(t=>`<button class="tab ${tab===t?'active':''}" onclick="UI.reportTab='${t}'; APP.render()">${t[0].toUpperCase()+t.slice(1)}</button>`).join('')}
+    </div>
+    ${tab!=='stock' && tab!=='outstanding' ? `<div class="toolbar">
+      <input type="date" value="${from}" onchange="UI.reportFrom=this.value; APP.render()">
+      <span style="color:var(--text-dim);font-size:12px;">to</span>
+      <input type="date" value="${to}" onchange="UI.reportTo=this.value; APP.render()">
+      <div class="spacer"></div>
+      <button class="btn btn-sm" onclick="APP.exportCSV('${tab}')">Export CSV</button>
+    </div>` : `<div class="toolbar"><div class="spacer"></div><button class="btn btn-sm" onclick="APP.exportCSV('${tab}')">Export CSV</button></div>`}
+    <div id="report-body"></div>
+  `;
+  const body = document.getElementById('report-body');
+  if(tab==='sales'){
+    const rows = DB.sales.filter(s=>inRange(s.date,from,to));
+    const total = rows.reduce((s,x)=>s+x.total,0);
+    body.innerHTML = `<div class="grid g-3" style="margin-bottom:16px;">
+      <div class="card stat"><div class="lbl">Total sales</div><div class="val">${money(total)}</div></div>
+      <div class="card stat"><div class="lbl">Invoices</div><div class="val">${rows.length}</div></div>
+      <div class="card stat"><div class="lbl">Avg. invoice</div><div class="val">${money(rows.length?total/rows.length:0)}</div></div>
+    </div>
+    <div class="tbl-wrap"><table class="ledger"><thead><tr><th>Invoice</th><th>Date</th><th>Customer</th><th style="text-align:right;">Total</th></tr></thead>
+    <tbody>${rows.length?rows.map(s=>`<tr><td>${esc(s.invoiceNo)}</td><td>${fmtDate(s.date)}</td><td>${esc(s.partyId?(getParty(s.partyId)||{name:'—'}).name:'Walk-in')}</td><td class="num" style="text-align:right;">${money(s.total)}</td></tr>`).join(''):'<tr><td colspan="4" class="tbl-empty">No data in range.</td></tr>'}</tbody></table></div>`;
+  } else if(tab==='purchases'){
+    const rows = DB.purchases.filter(p=>inRange(p.date,from,to));
+    const total = rows.reduce((s,x)=>s+x.total,0);
+    body.innerHTML = `<div class="grid g-3" style="margin-bottom:16px;">
+      <div class="card stat"><div class="lbl">Total purchases</div><div class="val">${money(total)}</div></div>
+      <div class="card stat"><div class="lbl">Bills</div><div class="val">${rows.length}</div></div>
+    </div>
+    <div class="tbl-wrap"><table class="ledger"><thead><tr><th>Bill</th><th>Date</th><th>Supplier</th><th style="text-align:right;">Total</th></tr></thead>
+    <tbody>${rows.length?rows.map(p=>`<tr><td>${esc(p.billNo)}</td><td>${fmtDate(p.date)}</td><td>${esc(p.partyId?(getParty(p.partyId)||{name:'—'}).name:'—')}</td><td class="num" style="text-align:right;">${money(p.total)}</td></tr>`).join(''):'<tr><td colspan="4" class="tbl-empty">No data in range.</td></tr>'}</tbody></table></div>`;
+  } else if(tab==='profit'){
+    const rows = DB.sales.filter(s=>inRange(s.date,from,to));
+    let revenue=0, cost=0;
+    rows.forEach(s=> s.items.forEach(i=>{ revenue += i.total; const it=getItem(i.itemId); cost += (it?it.purchasePrice:0)*i.qty; }));
+    const discTotal = rows.reduce((s,x)=>s+x.discount,0);
+    const profit = revenue - cost;
+    body.innerHTML = `<div class="grid g-4" style="margin-bottom:16px;">
+      <div class="card stat"><div class="lbl">Revenue</div><div class="val">${money(revenue)}</div></div>
+      <div class="card stat"><div class="lbl">Cost of goods</div><div class="val">${money(cost)}</div></div>
+      <div class="card stat"><div class="lbl">Discounts given</div><div class="val">${money(discTotal)}</div></div>
+      <div class="card stat"><div class="lbl">Estimated profit</div><div class="val">${money(profit)}</div></div>
+    </div><div class="hint" style="color:var(--text-dim);font-size:12px;">Estimated profit = revenue − cost of goods sold, based on each item's recorded purchase price.</div>`;
+  } else if(tab==='stock'){
+    const rows = [...DB.items].sort((a,b)=> a.stock-b.stock);
+    body.innerHTML = `<div class="grid g-3" style="margin-bottom:16px;">
+      <div class="card stat"><div class="lbl">Stock value (at cost)</div><div class="val">${money(totalStockValue())}</div></div>
+      <div class="card stat"><div class="lbl">Items tracked</div><div class="val">${DB.items.length}</div></div>
+      <div class="card stat warn"><div class="lbl">Low / out of stock</div><div class="val">${DB.items.filter(isLow).length}</div></div>
+    </div>
+    <div class="tbl-wrap"><table class="ledger"><thead><tr><th>Item</th><th style="text-align:right;">Stock</th><th style="text-align:right;">Value</th><th>Status</th></tr></thead>
+    <tbody>${rows.map(i=>`<tr><td>${esc(i.name)}</td><td class="num" style="text-align:right;">${i.stock} ${esc(i.unit)}</td><td class="num" style="text-align:right;">${money(i.stock*i.purchasePrice)}</td><td><span class="badge ${stockStatus(i).cls}">${stockStatus(i).label}</span></td></tr>`).join('')}</tbody></table></div>`;
+  } else if(tab==='outstanding'){
+    const custs = DB.parties.filter(p=>p.type==='customer').map(p=>({p,bal:partyBalance(p.id)})).filter(x=>x.bal>0).sort((a,b)=>b.bal-a.bal);
+    const supps = DB.parties.filter(p=>p.type==='supplier').map(p=>({p,bal:partyBalance(p.id)})).filter(x=>x.bal<0).sort((a,b)=>a.bal-b.bal);
+    body.innerHTML = `<div class="grid g-2">
+      <div>
+        <div class="section-title" style="margin-top:0;">Receivable (customers owe)</div>
+        <div class="tbl-wrap"><table class="ledger"><tbody>${custs.length?custs.map(x=>`<tr><td>${esc(x.p.name)}</td><td class="num" style="text-align:right;">${money(x.bal)}</td></tr>`).join(''):'<tr><td class="tbl-empty">Nothing outstanding.</td></tr>'}</tbody></table></div>
+      </div>
+      <div>
+        <div class="section-title" style="margin-top:0;">Payable (you owe suppliers)</div>
+        <div class="tbl-wrap"><table class="ledger"><tbody>${supps.length?supps.map(x=>`<tr><td>${esc(x.p.name)}</td><td class="num" style="text-align:right;">${money(-x.bal)}</td></tr>`).join(''):'<tr><td class="tbl-empty">Nothing outstanding.</td></tr>'}</tbody></table></div>
+      </div>
+    </div>`;
+  }
+}
+function exportCSV(tab){
+  let rows = [], headers = [];
+  if(tab==='sales'){ headers=['Invoice','Date','Customer','Total','Paid','Due']; rows = DB.sales.filter(s=>inRange(s.date,UI.reportFrom||'',UI.reportTo||'')).map(s=>[s.invoiceNo,s.date,s.partyId?(getParty(s.partyId)||{}).name:'Walk-in',s.total,s.paid,s.due]); }
+  else if(tab==='purchases'){ headers=['Bill','Date','Supplier','Total','Paid','Due']; rows = DB.purchases.filter(p=>inRange(p.date,UI.reportFrom||'',UI.reportTo||'')).map(p=>[p.billNo,p.date,p.partyId?(getParty(p.partyId)||{}).name:'—',p.total,p.paid,p.due]); }
+  else if(tab==='stock'){ headers=['Item','Stock','Unit','Purchase Price','Sale Price','Value']; rows = DB.items.map(i=>[i.name,i.stock,i.unit,i.purchasePrice,i.salePrice,i.stock*i.purchasePrice]); }
+  else { headers=['Party','Outstanding']; rows = DB.parties.map(p=>[p.name, partyBalance(p.id)]); }
+  const csv = [headers.join(','), ...rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(','))].join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = tab+'-report.csv'; a.click();
+}
+
+/* ============================================================
+   SETTINGS
+   ============================================================ */
+function renderSettings(){
+  document.getElementById('content').innerHTML = `
+    <div class="tabs">
+      <button class="tab ${(!UI.setTab||UI.setTab==='general')?'active':''}" onclick="UI.setTab='general'; APP.render()">General</button>
+      <button class="tab ${UI.setTab==='users'?'active':''}" onclick="UI.setTab='users'; APP.render()">Users</button>
+      <button class="tab ${UI.setTab==='catalog'?'active':''}" onclick="UI.setTab='catalog'; APP.render()">Categories &amp; Units</button>
+      <button class="tab ${UI.setTab==='backup'?'active':''}" onclick="UI.setTab='backup'; APP.render()">Backup</button>
+    </div>
+    <div id="settings-body"></div>
+  `;
+  const body = document.getElementById('settings-body');
+  const tab = UI.setTab || 'general';
+  if(tab==='general'){
+    body.innerHTML = `<div class="card" style="max-width:520px;">
+      <div class="field"><label>Shop name</label><input id="st-name" value="${esc(DB.business.name)}"></div>
+      <div class="field"><label>Address</label><textarea id="st-addr">${esc(DB.business.address||'')}</textarea></div>
+      <div class="field"><label>Phone</label><input id="st-phone" value="${esc(DB.business.phone||'')}"></div>
+      <div class="field"><label>Currency symbol</label><input id="st-cur" value="${esc(DB.settings.currency)}" style="width:80px;"></div>
+      <div class="field" style="display:flex;align-items:center;gap:8px;">
+        <input type="checkbox" id="st-wholesale" ${DB.business.wholesaleMode?'checked':''} style="width:auto;">
+        <label style="margin:0;">Enable wholesale pricing (tiered pricing per item, for when you start wholesale)</label>
+      </div>
+      <button class="btn btn-primary" onclick="APP.saveGeneral()">Save changes</button>
+    </div>`;
+  } else if(tab==='users'){
+    if(!isAdmin()){ body.innerHTML = '<div class="perm-lock">Admins only.</div>'; return; }
+    body.innerHTML = `<div class="toolbar"><div class="spacer"></div><button class="btn btn-accent" onclick="APP.openUserModal()">+ Add user</button></div>
+    <div class="tbl-wrap"><table class="ledger"><thead><tr><th>Name</th><th>Role</th><th></th></tr></thead>
+    <tbody>${DB.users.map(u=>`<tr><td>${esc(u.name)}</td><td><span class="badge ${u.role==='admin'?'badge-ok':''}">${u.role}</span></td>
+      <td style="text-align:right;"><button class="btn btn-sm" onclick="APP.openUserModal('${u.id}')">Edit</button>
+      ${DB.users.length>1?`<button class="btn btn-sm btn-danger" onclick="APP.deleteUser('${u.id}')">Remove</button>`:''}</td></tr>`).join('')}</tbody></table></div>`;
+  } else if(tab==='catalog'){
+    body.innerHTML = `<div class="grid g-2">
+      <div class="card">
+        <div style="font-family:var(--serif);margin-bottom:10px;">Categories</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;">${DB.categories.map(c=>`<span class="badge">${esc(c)} <a href="#" onclick="APP.removeCategory('${esc(c)}');return false;" style="color:var(--rust);text-decoration:none;">&times;</a></span>`).join('')}</div>
+        <div style="display:flex;gap:6px;"><input id="new-cat" placeholder="New category"><button class="btn" onclick="APP.addCategory()">Add</button></div>
+      </div>
+      <div class="card">
+        <div style="font-family:var(--serif);margin-bottom:10px;">Units</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;">${DB.units.map(u=>`<span class="badge">${esc(u)} <a href="#" onclick="APP.removeUnit('${esc(u)}');return false;" style="color:var(--rust);text-decoration:none;">&times;</a></span>`).join('')}</div>
+        <div style="display:flex;gap:6px;"><input id="new-unit" placeholder="New unit"><button class="btn" onclick="APP.addUnit()">Add</button></div>
+      </div>
+    </div>`;
+  } else if(tab==='backup'){
+    body.innerHTML = `<div class="grid g-2">
+      <div class="card">
+        <div style="font-family:var(--serif);margin-bottom:6px;">Download backup</div>
+        <p style="font-size:12.5px;color:var(--text-dim);">Everything — items, sales, purchases, parties, payments — saved as one JSON file you keep on your computer.</p>
+        <button class="btn btn-primary" onclick="APP.exportBackup()">Download backup (.json)</button>
+      </div>
+      <div class="card">
+        <div style="font-family:var(--serif);margin-bottom:6px;">Restore from backup</div>
+        <p style="font-size:12.5px;color:var(--text-dim);">This replaces all current data in this browser with the file you choose.</p>
+        <input type="file" accept=".json" onchange="APP.importBackup(this.files[0])">
+      </div>
+    </div>
+    <div class="card" style="margin-top:14px;border-color:var(--rust);">
+      <div style="font-family:var(--serif);margin-bottom:6px;color:var(--rust);">Reset all data</div>
+      <p style="font-size:12.5px;color:var(--text-dim);">Wipes everything on this device. Download a backup first.</p>
+      <button class="btn btn-danger" onclick="APP.resetAll()">Erase all data</button>
+    </div>`;
+  }
+}
+function saveGeneral(){
+  DB.business.name = document.getElementById('st-name').value.trim();
+  DB.business.address = document.getElementById('st-addr').value.trim();
+  DB.business.phone = document.getElementById('st-phone').value.trim();
+  DB.settings.currency = document.getElementById('st-cur').value.trim() || '₹';
+  DB.business.wholesaleMode = document.getElementById('st-wholesale').checked;
+  persist(); renderSideNav(); toast('Settings saved.');
+}
+function openUserModal(id){
+  const u = id ? DB.users.find(x=>x.id===id) : null;
+  setModal(`
+    <button class="close" onclick="APP.closeModal()">&times;</button>
+    <h3>${u?'Edit user':'Add user'}</h3>
+    <div class="field"><label>Name</label><input id="us-name" value="${u?esc(u.name):''}"></div>
+    <div class="field"><label>Role</label><select id="us-role"><option value="staff" ${u&&u.role==='staff'?'selected':''}>Staff</option><option value="admin" ${u&&u.role==='admin'?'selected':''}>Admin</option></select></div>
+    <div class="field"><label>4-digit PIN</label><input id="us-pin" maxlength="4" inputmode="numeric" value="${u?u.pin:''}"></div>
+    <div class="form-err" id="us-err"></div>
+    <div class="modal-actions"><button class="btn" onclick="APP.closeModal()">Cancel</button><button class="btn btn-primary" onclick="APP.saveUser('${u?u.id:''}')">Save</button></div>
+  `);
+}
+function saveUser(id){
+  const name = document.getElementById('us-name').value.trim();
+  const role = document.getElementById('us-role').value;
+  const pin = document.getElementById('us-pin').value.trim();
+  if(!name || !/^\d{4}$/.test(pin)){ document.getElementById('us-err').textContent='Name + 4-digit PIN required.'; return; }
+  if(id){ Object.assign(DB.users.find(u=>u.id===id), {name, role, pin}); }
+  else DB.users.push({ id: uid('u'), name, role, pin, createdAt: nowISO() });
+  persist(); closeModal(); render(); toast('User saved.');
+}
+function deleteUser(id){
+  if(id===DB.currentUserId){ toast("You can't remove the account you're logged in as.", true); return; }
+  if(!confirm('Remove this user?')) return;
+  DB.users = DB.users.filter(u=>u.id!==id); persist(); render();
+}
+function addCategory(){ const v = document.getElementById('new-cat').value.trim(); if(v && !DB.categories.includes(v)){ DB.categories.push(v); persist(); render(); } }
+function removeCategory(c){ DB.categories = DB.categories.filter(x=>x!==c); persist(); render(); }
+function addUnit(){ const v = document.getElementById('new-unit').value.trim(); if(v && !DB.units.includes(v)){ DB.units.push(v); persist(); render(); } }
+function removeUnit(u){ DB.units = DB.units.filter(x=>x!==u); persist(); render(); }
+function resetAll(){
+  if(!confirm('This erases everything and cannot be undone. Continue?')) return;
+  if(!confirm('Really sure? Type OK in the next box to confirm.')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  location.reload();
+}
+
+/* ============================================================
+   MODAL helpers
+   ============================================================ */
+function setModal(html){ document.getElementById('modal-box').innerHTML = html; document.getElementById('modal-bg').classList.add('show'); }
+function closeModal(){ document.getElementById('modal-bg').classList.remove('show'); }
+document.getElementById('modal-bg').addEventListener('click', e=>{ if(e.target.id==='modal-bg') closeModal(); });
+
+/* ============================================================
+   BC — tiny offline 1D barcode reader
+   Formats: EAN-13, UPC-A (as EAN-13), EAN-8, Code 128.
+   Works on plain grayscale pixel data, so it needs no browser
+   barcode API, no camera permission and no internet.
+   ============================================================ */
+const BC = (function(){
+  const L = ['0001101','0011001','0010011','0111101','0100011','0110001','0101111','0111011','0110111','0001011'];
+  const G = ['0100111','0110011','0011011','0100001','0011101','0111001','0000101','0010001','0001001','0010111'];
+  const R = ['1110010','1100110','1101100','1000010','1011100','1001110','1010000','1000100','1001000','1110100'];
+  const PARITY = ['LLLLLL','LLGLGG','LLGGLG','LLGGGL','LGLLGG','LGGLLG','LGGGLL','LGLGLG','LGLGGL','LGGLGL'];
+
+  function bitsToRuns(bits){
+    const out=[]; let c=bits[0], n=0;
+    for(let i=0;i<bits.length;i++){ if(bits[i]===c) n++; else { out.push(n); c=bits[i]; n=1; } }
+    out.push(n); return out;
+  }
+  const LC = L.map((b,d)=>({pat:bitsToRuns(b), d, t:'L'}));
+  const GC = G.map((b,d)=>({pat:bitsToRuns(b), d, t:'G'}));
+  const RC = R.map((b,d)=>({pat:bitsToRuns(b), d, t:'R'}));
+  const LG = LC.concat(GC);
+  let MAXERR = 1.2;      // worst allowed error for a single digit (in modules)
+  let MAXAVG = 0.75;     // worst allowed average error over the whole code
+  let ERRSUM = 0;        // scratch: running error total for the code being decoded
+
+  function matchGroup(r, p, cands){
+    const tot = r[p]+r[p+1]+r[p+2]+r[p+3];
+    if(tot<=0) return null;
+    const u = tot/7; let best=null, bestErr=1e9;
+    for(let c=0;c<cands.length;c++){
+      const pt = cands[c].pat; let e=0;
+      for(let k=0;k<4;k++) e += Math.abs(r[p+k]/u - pt[k]);
+      if(e<bestErr){ bestErr=e; best=cands[c]; }
+    }
+    if(bestErr>MAXERR) return null;
+    ERRSUM += bestErr;
+    return best;
+  }
+  function guardOk(r,i,n,m){
+    for(let k=0;k<n;k++){ const x=r[i+k]/m; if(x<0.4||x>2.0) return false; }
+    return true;
+  }
+  function ean13Check(d){
+    let s=0; for(let k=0;k<12;k++) s += d[k]*(k%2===0?1:3);
+    return ((10 - s%10)%10) === d[12];
+  }
+  function ean8Check(d){
+    let s=0; for(let k=0;k<7;k++) s += d[k]*(k%2===0?3:1);
+    return ((10 - s%10)%10) === d[7];
+  }
+  function decodeEAN13(r,i){
+    if(i+59>r.length) return null;
+    const m=(r[i]+r[i+1]+r[i+2])/3;
+    if(m<1||!guardOk(r,i,3,m)||!guardOk(r,i+27,5,m)||!guardOk(r,i+56,3,m)) return null;
+    ERRSUM=0;
+    const digits=[]; let parity='';
+    for(let k=0;k<6;k++){ const c=matchGroup(r,i+3+k*4,LG); if(!c) return null; digits.push(c.d); parity+=c.t; }
+    const first=PARITY.indexOf(parity); if(first<0) return null;
+    for(let k=0;k<6;k++){ const c=matchGroup(r,i+32+k*4,RC); if(!c) return null; digits.push(c.d); }
+    const all=[first].concat(digits);
+    if(!ean13Check(all)) return null;
+    if(ERRSUM/12 > MAXAVG) return null;
+    return { text: all.join(''), format:'ean_13', err: ERRSUM/12 };
+  }
+  function decodeEAN8(r,i){
+    if(i+43>r.length) return null;
+    const m=(r[i]+r[i+1]+r[i+2])/3;
+    if(m<1||!guardOk(r,i,3,m)||!guardOk(r,i+19,5,m)||!guardOk(r,i+40,3,m)) return null;
+    ERRSUM=0;
+    const digits=[];
+    for(let k=0;k<4;k++){ const c=matchGroup(r,i+3+k*4,LC); if(!c) return null; digits.push(c.d); }
+    for(let k=0;k<4;k++){ const c=matchGroup(r,i+24+k*4,RC); if(!c) return null; digits.push(c.d); }
+    if(!ean8Check(digits)) return null;
+    if(ERRSUM/8 > MAXAVG*0.8) return null;   // EAN-8 has a short checksum, so be stricter
+    return { text: digits.join(''), format:'ean_8', err: ERRSUM/8 };
+  }
+
+  /* ---------------- Code 128 ---------------- */
+  const C128 = ['212222','222122','222221','121223','121322','131222','122213','122312','132212','221213','221312','231212','112232','122132','122231','113222','123122','123221','223211','221132','221231','213212','223112','312131','311222','321122','321221','312212','322112','322211','212123','212321','232121','111323','131123','131321','112313','132113','132311','211313','231113','231311','112133','112331','132131','113123','113321','133121','313121','211331','231131','213113','213311','213131','311123','311321','331121','312113','312311','332111','314111','221411','431111','111224','111422','121124','121421','141122','141221','112214','112412','122114','122411','142112','142211','241211','221114','413111','241112','134111','111242','121142','121241','114212','124112','124211','411212','421112','421211','212141','214121','412121','111143','111341','131141','114113','114311','411113','411311','113141','114131','311141','411131','211412','211214','211232'];
+  const C128P = C128.map(s=>s.split('').map(Number));
+  const STOP = [2,3,3,1,1,1,2];
+
+  function match6(r,p){
+    const tot=r[p]+r[p+1]+r[p+2]+r[p+3]+r[p+4]+r[p+5];
+    if(tot<=0) return null;
+    const u=tot/11; let best=-1, bestErr=1e9;
+    for(let v=0; v<C128P.length; v++){
+      const pt=C128P[v]; let e=0;
+      for(let k=0;k<6;k++){ e += Math.abs(r[p+k]/u - pt[k]); if(e>=bestErr) break; }
+      if(e<bestErr){ bestErr=e; best=v; }
+    }
+    return { v:best, err:bestErr };
+  }
+  function isStop(r,p){
+    if(p+7>r.length) return false;
+    let tot=0; for(let k=0;k<7;k++) tot+=r[p+k];
+    const u=tot/13; let e=0;
+    for(let k=0;k<7;k++) e += Math.abs(r[p+k]/u - STOP[k]);
+    return e<=2.0;
+  }
+  function decode128(r,i){
+    if(i+6+6+7>r.length) return null;
+    const s=match6(r,i);
+    if(!s || s.v<103 || s.v>105 || s.err>1.5) return null;
+    const values=[s.v]; let p=i+6; let esum=s.err;
+    while(values.length<80){
+      if(isStop(r,p)) break;
+      if(p+6>r.length) return null;
+      const g=match6(r,p);
+      if(!g || g.err>1.6 || g.v>102) return null;
+      values.push(g.v); p+=6; esum+=g.err;
+    }
+    if(values.length<4) return null; // start + >=2 data + check
+    const check=values[values.length-1];
+    let sum=values[0];
+    for(let k=1;k<values.length-1;k++) sum += k*values[k];
+    if(sum%103 !== check) return null;
+    let set = values[0]===103?'A':values[0]===104?'B':'C';
+    let out='', shift=false;
+    for(let k=1;k<values.length-1;k++){
+      const v=values[k];
+      let cs = set;
+      if(shift){ cs = (set==='A')?'B':'A'; shift=false; }
+      if(v===99){ set='C'; continue; }
+      if(v===100){ set='B'; continue; }
+      if(v===101){ set='A'; continue; }
+      if(v===98){ shift=true; continue; }
+      if(v>=96 && v<=102 && cs!=='C') continue; // FNC / unsupported specials
+      if(cs==='C'){ if(v<=99) out += (v<10?'0':'')+v; }
+      else if(cs==='B'){ if(v<=95) out += String.fromCharCode(32+v); }
+      else { if(v<=63) out += String.fromCharCode(32+v); }
+    }
+    if(out.length<3) return null;
+    if(esum/values.length > 0.9) return null;
+    return { text: out, format:'code_128', err: esum/values.length };
+  }
+
+  /* ---------------- line handling ---------------- */
+  function smooth(line){
+    const n=line.length, out=new Float32Array(n);
+    for(let i=0;i<n;i++){
+      const a=line[i>0?i-1:i], b=line[i], c=line[i<n-1?i+1:i];
+      out[i]=(a+2*b+c)/4;
+    }
+    return out;
+  }
+  function binarize(line, win){
+    const n=line.length, bits=new Uint8Array(n);
+    const ps=new Float64Array(n+1);
+    for(let k=0;k<n;k++) ps[k+1]=ps[k]+line[k];
+    const half=win>>1;
+    for(let k=0;k<n;k++){
+      const a=k-half<0?0:k-half, b=k+half+1>n?n:k+half+1;
+      const mean=(ps[b]-ps[a])/(b-a);
+      bits[k]= line[k] < mean-6 ? 1 : 0;
+    }
+    return bits;
+  }
+  function decodeRuns(runs, firstDark){
+    const start = firstDark?0:1;
+    for(let i=start;i<runs.length-20;i+=2){
+      // a quiet zone (wide space) should precede the barcode, if there is anything before it
+      if(i>0){
+        const m=(runs[i]+runs[i+1]+runs[i+2])/3;
+        if(runs[i-1] < m*2) continue;
+      }
+      let res = decodeEAN13(runs,i) || decodeEAN8(runs,i) || decode128(runs,i);
+      if(res) return res;
+    }
+    return null;
+  }
+  /* Turn a brightness line into bar/space widths with sub-pixel edges.
+     The bar/space threshold is the midpoint between the local darkest and
+     lightest values, so it adapts to shadows and uneven lighting. */
+  function slidingExtremes(line, half){
+    const n=line.length, mn=new Float32Array(n), mx=new Float32Array(n);
+    const dqMin=new Int32Array(n), dqMax=new Int32Array(n);
+    let hMin=0,tMin=0,hMax=0,tMax=0, nxt=0;
+    for(let k=0;k<n;k++){
+      const hi=Math.min(n-1,k+half);
+      while(nxt<=hi){
+        while(tMin>hMin && line[dqMin[tMin-1]]>=line[nxt]) tMin--;
+        dqMin[tMin++]=nxt;
+        while(tMax>hMax && line[dqMax[tMax-1]]<=line[nxt]) tMax--;
+        dqMax[tMax++]=nxt;
+        nxt++;
+      }
+      const lo=k-half;
+      while(dqMin[hMin]<lo) hMin++;
+      while(dqMax[hMax]<lo) hMax++;
+      mn[k]=line[dqMin[hMin]]; mx[k]=line[dqMax[hMax]];
+    }
+    return {mn,mx};
+  }
+  function lineToRuns(line, win){
+    const n=line.length, half=win>>1;
+    const ex=slidingExtremes(line, half);
+    const d=new Float32Array(n), hy=new Float32Array(n);
+    for(let k=0;k<n;k++){
+      const c=ex.mx[k]-ex.mn[k];
+      if(c<28){ d[k]=0; hy[k]=1e9; }            // flat area: no edges here
+      else { d[k]=line[k]-(ex.mx[k]+ex.mn[k])/2; hy[k]=c*0.16; }
+    }
+    const pos=[]; let firstDark=null, state=d[0]<0?1:0, lastZero=0;
+    for(let k=0;k<n-1;k++){
+      if((d[k]>=0)!==(d[k+1]>=0)) lastZero = k + d[k]/(d[k]-d[k+1]);
+      if(state===0 && d[k+1]<-hy[k+1]){ state=1; pos.push(lastZero); if(firstDark===null) firstDark=true; }
+      else if(state===1 && d[k+1]>hy[k+1]){ state=0; pos.push(lastZero); if(firstDark===null) firstDark=false; }
+    }
+    const runs=[];
+    for(let j=0;j+1<pos.length;j++) runs.push(pos[j+1]-pos[j]);
+    return { runs, firstDark: firstDark===true };
+  }
+  function decodeLine(line){
+    if(line.length<60) return null;
+    const sm=smooth(line);
+    const wins=[61,181];
+    for(let w=0; w<wins.length; w++){
+      const lr=lineToRuns(sm, wins[w]);
+      const runs=lr.runs;
+      if(runs.length<25) continue;
+      let res = decodeRuns(runs, lr.firstDark);
+      if(res) return res;
+      const rev = runs.slice().reverse();
+      const lastDark = (runs.length%2===1) ? lr.firstDark : !lr.firstDark;
+      res = decodeRuns(rev, lastDark);
+      if(res) return res;
+    }
+    return null;
+  }
+
+  /* Sweep lines of several angles across a grayscale image. */
+  function decodeGray(gray, w, h, opts){
+    opts = opts || {};
+    const angles = opts.angles || [0,90,12,-12,78,102,25,-25,65,115,40,-40];
+    const density = opts.density || 14;      // lines per sweep
+    const cx=w/2, cy=h/2, diag=Math.ceil(Math.hypot(w,h));
+    for(let ai=0; ai<angles.length; ai++){
+      const th=angles[ai]*Math.PI/180, cs=Math.cos(th), sn=Math.sin(th);
+      const extent=(Math.abs(w*sn)+Math.abs(h*cs))/2;
+      const step=Math.max(3, (extent*2)/density);
+      const offs=[0];
+      for(let t=step; t<extent; t+=step){ offs.push(t); offs.push(-t); }
+      for(let oi=0; oi<offs.length; oi++){
+        const t=offs[oi];
+        const line=[];
+        for(let s=-diag/2; s<=diag/2; s++){
+          const x=cx + s*cs - t*sn, y=cy + s*sn + t*cs;
+          if(x<1||y<1||x>=w-2||y>=h-2) continue;
+          // average three neighbouring parallel samples to cut noise
+          const x0=Math.round(x), y0=Math.round(y);
+          const nx=Math.round(-sn), ny=Math.round(cs);
+          const v=(gray[y0*w+x0] + gray[Math.max(0,y0-ny)*w+Math.max(0,x0-nx)] + gray[Math.min(h-1,y0+ny)*w+Math.min(w-1,x0+nx)])/3;
+          line.push(v);
+        }
+        if(line.length<80) continue;
+        const res=decodeLine(line);
+        if(res) return res;
+      }
+    }
+    return null;
+  }
+
+  function tune(a,b){ MAXERR=a; MAXAVG=b; }
+  return { decodeLine, decodeGray, tune };
+})();
+
+/* ============================================================
+   LIVE BARCODE SCANNER — Zobaze-style
+   Tap SCAN -> the camera opens full screen -> point at a pack ->
+   the item drops into the bill with a beep, and the camera stays
+   open so you can scan the next one. Bluetooth / USB scanners work
+   too (see "hardware scanner" below). Barcodes are read by the
+   built-in reader (BC) and, where the browser has one, its native
+   BarcodeDetector as well. Nothing needs internet.
+   ============================================================ */
+const SC = { stream:null, timer:null, active:false, paused:false, mode:'bill', cb:null,
+             native:null, track:null, torch:false, cand:null, hold:null, unknown:null, lastItemId:null };
+
+function liveCameraPossible(){ return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia); }
+function toGray(imgData){
+  const d=imgData.data, n=d.length>>2, g=new Uint8Array(n);
+  for(let i=0,j=0;i<n;i++,j+=4) g[i]=(d[j]*77 + d[j+1]*150 + d[j+2]*29)>>8;
+  return g;
+}
+let _ac=null;
+function tone(freq, ms, vol){
+  try{
+    const C=window.AudioContext||window.webkitAudioContext; if(!C) return;
+    _ac = _ac || new C();
+    const o=_ac.createOscillator(), g=_ac.createGain();
+    o.frequency.value=freq; g.gain.value=vol||0.12; o.connect(g); g.connect(_ac.destination); o.start();
+    setTimeout(()=>{ try{o.stop();}catch(e){} }, ms);
+  }catch(e){}
+}
+function beep(){ tone(1000, 90); }
+function beepBad(){ tone(240, 200, 0.14); }
+function buzz(p){ try{ if(navigator.vibrate) navigator.vibrate(p); }catch(e){} }
+
+function sameBarcode(a,b){
+  if(!a || !b) return false;
+  a=String(a).trim(); b=String(b).trim();
+  if(a===b) return true;
+  const na=a.replace(/^0+/,''), nb=b.replace(/^0+/,'');
+  return na.length>=6 && na===nb;     // 12-digit UPC-A and its 13-digit EAN form are the same product
+}
+function findItemByCode(code){ return DB.items.find(i=>sameBarcode(i.barcode, code)); }
+
+/* ---------- open / close ---------- */
+function scanForBilling(){ openScanner('bill'); }
+function scanForItems(){ openScanner('search', itemsScanResult); }
+function scanBarcodeField(itemId){
+  openScanner('field', function(code){
+    const el=document.getElementById('f-barcode'); if(el) el.value=code;
+    const dup=DB.items.find(i=>sameBarcode(i.barcode,code) && i.id!==itemId);
+    if(dup) toast('Heads up: \u201C'+dup.name+'\u201D already uses this barcode.', true);
+    else toast('Barcode saved in the form: '+code);
+  });
+}
+
+function scanSheetMain(){
+  const billing = SC.mode==='bill';
+  return `
+    ${billing ? `<div class="sc-last empty" id="sc-last">Nothing scanned yet</div>` : ''}
+    <div class="sc-row">
+      <button class="sc-ghost" onclick="APP.scanTypeNumber()">\u2328 Type number</button>
+      ${billing ? `<button class="sc-done" onclick="APP.closeScanner()">Done \u00B7 <span id="sc-total">${money(cartSubtotal())}</span></button>`
+                : `<button class="sc-done" onclick="APP.closeScanner()">Cancel</button>`}
+    </div>`;
+}
+function openScanner(mode, cb){
+  stopScannerStream();
+  SC.mode=mode||'bill'; SC.cb=cb||null; SC.cand=null; SC.hold=null; SC.paused=false; SC.unknown=null; SC.torch=false; SC.lastItemId=null;
+  if(SC.native===null){
+    SC.native=false;
+    if('BarcodeDetector' in window){ try{ SC.native=new window.BarcodeDetector(); }catch(e){ SC.native=false; } }
+  }
+  const title = SC.mode==='bill' ? 'Scan items to bill' : SC.mode==='search' ? 'Scan to find an item' : 'Scan to save barcode';
+  const el=document.getElementById('scanner');
+  el.className='';
+  el.innerHTML = `
+    <video id="scan-video" playsinline muted autoplay></video>
+    <div class="sc-top">
+      <button class="sc-round" onclick="APP.closeScanner()" aria-label="Close">\u2715</button>
+      <div class="sc-title">${title}</div>
+      <button class="sc-round" id="sc-torch" onclick="APP.toggleTorch()" style="visibility:hidden" aria-label="Torch">\uD83D\uDD26</button>
+    </div>
+    <div class="sc-view"><div class="sc-frame" id="scan-frame"><i class="cn tl"></i><i class="cn tr"></i><i class="cn bl"></i><i class="cn br"></i><span class="sc-line"></span></div></div>
+    <div class="sc-sheet" id="sc-sheet">
+      <div class="sc-msg" id="scan-status">Starting camera\u2026</div>
+      <div id="sc-dyn">${scanSheetMain()}</div>
+    </div>`;
+  el.style.display='block';
+  document.body.classList.add('scanning');
+  startScanner();
+}
+function stopScannerStream(){
+  SC.active=false;
+  if(SC.timer){ clearTimeout(SC.timer); SC.timer=null; }
+  if(SC.stream){ SC.stream.getTracks().forEach(t=>t.stop()); SC.stream=null; }
+  SC.track=null;
+}
+function closeScanner(){
+  stopScannerStream();
+  const el=document.getElementById('scanner');
+  el.style.display='none'; el.innerHTML='';
+  document.body.classList.remove('scanning');
+  if(UI.view==='billing') refreshCartTotals();
+}
+function scanRetry(){ openScanner(SC.mode, SC.cb); }
+function scanStatus(msg, isErr){
+  const el=document.getElementById('scan-status');
+  if(el){ el.textContent=msg; el.style.color=isErr?'var(--rust)':''; }
+}
+function flash(kind){
+  const f=document.getElementById('scan-frame'); if(!f) return;
+  f.classList.remove('ok','bad'); void f.offsetWidth; f.classList.add(kind);
+  setTimeout(()=>f.classList.remove(kind), 450);
+}
+function toggleTorch(){
+  if(!SC.track) return;
+  SC.torch=!SC.torch;
+  SC.track.applyConstraints({advanced:[{torch:SC.torch}]}).catch(()=>{ SC.torch=false; });
+  const b=document.getElementById('sc-torch'); if(b) b.classList.toggle('on', SC.torch);
+}
+
+/* ---------- what happens when a code is read ---------- */
+function updateScanSheet(){
+  const last=document.getElementById('sc-last'), tot=document.getElementById('sc-total');
+  if(tot) tot.textContent=money(cartSubtotal());
+  if(!last) return;
+  const it=getItem(SC.lastItemId), line=CART.find(c=>c.itemId===SC.lastItemId);
+  if(!it || !line){ last.className='sc-last empty'; last.textContent='Nothing scanned yet'; return; }
+  last.className='sc-last';
+  last.innerHTML=`<span>\u2713 <b>${esc(it.name)}</b> \u00D7 ${line.qty}</span><button class="sc-plus" onclick="APP.scanPlus()">+1</button>`;
+}
+function scanPlus(){
+  const r=addToCart(SC.lastItemId,{quiet:true});
+  if(r.ok){ beep(); updateScanSheet(); } else { beepBad(); scanStatus(r.msg,true); }
+}
+function handleScan(code){
+  code=String(code||'').trim(); if(!code) return;
+  if(SC.mode!=='bill'){ flash('ok'); beep(); buzz(60); const cb=SC.cb; closeScanner(); if(cb) cb(code); return; }
+  const it=findItemByCode(code);
+  if(!it){ flash('bad'); beepBad(); buzz([60,40,60]); showUnknown(code); return; }
+  const r=addToCart(it.id,{quiet:true});
+  if(!r.ok){ flash('bad'); beepBad(); buzz([60,40,60]); scanStatus(r.msg,true); return; }
+  flash('ok'); beep(); buzz(60);
+  SC.lastItemId=it.id; scanStatus('Added '+it.name); updateScanSheet();
+}
+function showUnknown(code){
+  SC.paused=true; SC.unknown=code;
+  document.getElementById('sc-dyn').innerHTML=`
+    <div class="sc-unknown"><b>${esc(code)}</b><br>This barcode isn\u2019t in your items yet.</div>
+    <div class="sc-row">
+      <button class="sc-ghost" onclick="APP.scanResume()">Keep scanning</button>
+      <button class="sc-done" onclick="APP.scanAddUnknown()">Add this item</button>
+    </div>`;
+  scanStatus('Not found', true);
+}
+function scanResume(){
+  SC.paused=false; SC.hold={code:SC.unknown, seenAt:Date.now()}; SC.unknown=null;
+  document.getElementById('sc-dyn').innerHTML=scanSheetMain();
+  scanStatus('Point the camera at the next barcode'); updateScanSheet();
+}
+function scanAddUnknown(){
+  const code=SC.unknown; closeScanner();
+  openItemModal(null,{barcode:code, fromBilling:true});
+}
+function scanTypeNumber(){
+  SC.paused=true;
+  document.getElementById('sc-dyn').innerHTML=`
+    <div class="sc-typed">
+      <input id="scan-typed" inputmode="numeric" placeholder="Type the barcode number" onkeydown="if(event.key==='Enter'){APP.scanTypedSubmit();}">
+      <button class="sc-done" style="flex:none;padding:0 18px;" onclick="APP.scanTypedSubmit()">OK</button>
+    </div>
+    <button class="sc-ghost" style="width:100%;margin-top:8px;" onclick="APP.scanTypedCancel()">Back to camera</button>`;
+  setTimeout(()=>{ const i=document.getElementById('scan-typed'); if(i) i.focus(); }, 50);
+}
+function scanTypedCancel(){ SC.paused=false; document.getElementById('sc-dyn').innerHTML=scanSheetMain(); updateScanSheet(); }
+function scanTypedSubmit(){
+  const v=(document.getElementById('scan-typed')||{}).value; if(!v||!v.trim()) return;
+  SC.paused=false; if(SC.mode==='bill') document.getElementById('sc-dyn').innerHTML=scanSheetMain();
+  handleScan(v.trim());
+  if(SC.mode==='bill' && !SC.unknown) updateScanSheet();
+}
+
+/* ---------- camera loop ---------- */
+/* Devices disagree on which constraints they'll accept without throwing
+   OverconstrainedError, so we try the best set first and fall back to
+   plainer ones instead of giving up after one rejected attempt. */
+const CAMERA_CONSTRAINT_ATTEMPTS = [
+  { video:{ facingMode:{exact:'environment'}, width:{ideal:1920}, height:{ideal:1080} }, audio:false },
+  { video:{ facingMode:{ideal:'environment'} }, audio:false },
+  { video:{ facingMode:'environment' }, audio:false },
+  { video:true, audio:false }
+];
+async function getCameraStream(){
+  let lastErr=null;
+  for(const c of CAMERA_CONSTRAINT_ATTEMPTS){
+    try{ return await navigator.mediaDevices.getUserMedia(c); }
+    catch(e){ lastErr=e; if(e && e.name==='NotAllowedError') throw e; /* don't keep asking if the person said no */ }
+  }
+  throw lastErr || new Error('no camera');
+}
+async function startScanner(){
+  if(!liveCameraPossible()){ showCameraProblem(null); return; }
+  SC.active=true;
+  try{
+    const stream=await getCameraStream();
+    const video=document.getElementById('scan-video');
+    if(!SC.active || !video){ stream.getTracks().forEach(t=>t.stop()); return; }
+    SC.stream=stream; SC.track=stream.getVideoTracks()[0];
+    video.muted=true; video.defaultMuted=true; video.playsInline=true;
+    video.setAttribute('playsinline',''); video.setAttribute('webkit-playsinline','');
+    video.srcObject=stream;
+
+    // Some phones grant the permission but then never deliver a frame
+    // (silently stuck instead of throwing). Watch for that and offer a
+    // manual "tap to start" instead of leaving the person staring at black.
+    let gotFrame=false;
+    const onPlaying=()=>{ gotFrame=true; };
+    video.addEventListener('loadedmetadata', onPlaying, {once:true});
+    try{ await video.play(); }catch(playErr){ /* often needs a user tap on some phones; handled by the watchdog below */ }
+    scanStatus(SC.mode==='bill' ? 'Point the camera at a barcode \u2014 items are added automatically' : 'Point the camera at a barcode');
+    setTimeout(()=>{
+      if(!SC.active || gotFrame || video.videoWidth>0) return;
+      showTapToStart(video, stream);
+    }, 2200);
+
+    try{
+      const caps=SC.track.getCapabilities ? SC.track.getCapabilities() : {};
+      if(caps.focusMode && caps.focusMode.indexOf('continuous')>=0) await SC.track.applyConstraints({advanced:[{focusMode:'continuous'}]});
+      if(caps.torch){ const tb=document.getElementById('sc-torch'); if(tb) tb.style.visibility='visible'; }
+    }catch(e){ /* optional camera extras */ }
+
+    const canvas=document.createElement('canvas');
+    const ctx=canvas.getContext('2d',{willReadFrequently:true});
+    const tick=async()=>{
+      if(!SC.active) return;
+      try{
+        if(!SC.paused && video.readyState>=2 && video.videoWidth){
+          let code=null, sure=false;
+          if(SC.native){
+            try{ const c=await SC.native.detect(video); if(c && c.length){ code=c[0].rawValue; sure=true; } }catch(e){}
+          }
+          if(!code){
+            const vw=video.videoWidth, vh=video.videoHeight, sc=Math.min(1, 1100/Math.max(vw,vh));
+            canvas.width=Math.round(vw*sc); canvas.height=Math.round(vh*sc);
+            ctx.drawImage(video,0,0,canvas.width,canvas.height);
+            const r=BC.decodeGray(toGray(ctx.getImageData(0,0,canvas.width,canvas.height)), canvas.width, canvas.height, {angles:[0,90,10,-10,80,100,22,-22], density:12});
+            if(r) code=r.text;
+          }
+          const now=Date.now();
+          if(code){
+            if(SC.hold && SC.hold.code===code && now-SC.hold.seenAt<900){ SC.hold.seenAt=now; }   // same pack still in view
+            else if(sure || (SC.cand && SC.cand.code===code && now-SC.cand.at<2500)){
+              SC.hold={code, seenAt:now}; SC.cand=null; handleScan(code);
+            } else { SC.cand={code, at:now}; }
+          }
+        }
+      }catch(e){ /* keep going */ }
+      if(SC.active) SC.timer=setTimeout(tick, 60);
+    };
+    tick();
+  }catch(err){ showCameraProblem(err); }
+}
+
+/* ---------- camera granted but stuck black: offer a manual tap ---------- */
+function showTapToStart(video, stream){
+  if(document.getElementById('sc-tap')) return;
+  const live=stream.getVideoTracks()[0], state=live?live.readyState:'?';
+  const btn=document.createElement('button');
+  btn.id='sc-tap'; btn.className='sc-tap';
+  btn.innerHTML='\u25B6<span>Tap to start camera</span>';
+  btn.onclick=async()=>{
+    btn.disabled=true; btn.querySelector('span').textContent='Starting\u2026';
+    try{ await video.play(); }catch(e){}
+    setTimeout(()=>{
+      if(video.videoWidth>0){ btn.remove(); }
+      else {
+        scanStatus('Still no picture from the camera (track: '+state+'). Try "Try again", or use the photo / Bluetooth options below.', true);
+        btn.remove();
+        showCameraProblem({name:'NoFrame'});
+      }
+    }, 900);
+  };
+  const stage=document.getElementById('scanner'); if(stage) stage.appendChild(btn);
+  scanStatus('Camera connected but no picture yet \u2014 tap the button to start it.', true);
+}
+
+/* ---------- when the camera can't start: say exactly why ---------- */
+function showCameraProblem(err){
+  stopScannerStream();
+  const el=document.getElementById('scanner'); if(el) el.className='bad';
+  const n=(err&&err.name)||'', proto=location.protocol, secure=!!window.isSecureContext;
+  const ua=navigator.userAgent||'';
+  const inApp=/FBAN|FBAV|Instagram|WhatsApp|Snapchat|Telegram|; wv\)/i.test(ua);
+  let title, why, steps;
+  let extra='';
+  if(!liveCameraPossible()){
+    title='Live camera can\u2019t start when the app is opened this way';
+    why=(proto==='content:'||proto==='file:')
+      ? 'The app was opened as a file from your phone\u2019s storage. Phone browsers only give the camera to pages opened from a secure https link.'
+      : 'This page isn\u2019t loaded over https, so the browser hides the camera from it.';
+    const fname=decodeURIComponent((location.pathname||'').split('/').pop()||'Counter-Shop-Manager.html');
+    steps=[];
+    if(proto==='content:'){
+      steps.push('Quickest thing to try: open <b>Chrome</b>, paste the address below into the address bar and open it. Change the folder if you saved the file somewhere other than Downloads, and allow file access if Chrome asks.');
+      extra='<div class="sc-copy"><input id="sc-addr" readonly value="'+esc('file:///sdcard/Download/'+fname)+'" onclick="this.select()"><button onclick="APP.copyAddr()">Copy</button></div>';
+    }
+    steps.push('Best long-term fix: put the app on a free https link (drag it onto <b>app.netlify.com/drop</b>) and open that link in Chrome \u2192 menu \u2192 Install app. Steps are in HOW-TO-INSTALL.txt.');
+    steps.push('Bluetooth / USB barcode scanners work in every setup, with no camera needed.');
+    steps.push('Or type the barcode number.');
+  } else if(n==='NoFrame'){
+    title='Camera opened but sent no picture';
+    why='Chrome allowed the camera, but this phone\u2019s camera driver didn\u2019t deliver any video to the page \u2014 a known quirk on some Android phones with web pages opened from local files.';
+    steps=['Tap Try again \u2014 it often works on the 2nd attempt.',
+           'Close any other app that might be holding the camera (camera app, video call, another browser tab), then try again.',
+           'Best fix: open the app from an https link instead (see HOW-TO-INSTALL.txt) \u2014 this problem does not happen there.',
+           'Bluetooth / USB scanner or typing the number always work meanwhile.'];
+  } else if(n==='NotAllowedError' || n==='SecurityError'){
+    title='Camera permission is blocked';
+    why='The browser was told not to let this page use the camera.';
+    steps=['Tap the lock or settings icon next to the address bar \u2192 Permissions \u2192 Camera \u2192 Allow.','Then tap Try again.'];
+  } else if(n==='NotFoundError' || n==='OverconstrainedError'){
+    title='No camera was found'; why='This device didn\u2019t report a usable camera.';
+    steps=['Check the camera works in your normal camera app.','Then tap Try again.'];
+  } else if(n==='NotReadableError'){
+    title='The camera is busy'; why='Another app is using the camera right now.';
+    steps=['Close other apps that use the camera (camera, video calls, torch).','Then tap Try again.'];
+  } else { title='The camera didn\u2019t start'; why='The browser reported: '+(n||'unknown error')+'.'; steps=['Tap Try again.','If it keeps failing, use a Bluetooth / USB scanner or type the number.']; }
+  if(inApp) steps.unshift('You look to be inside another app\u2019s built-in browser \u2014 open this page in Chrome instead.');
+  const sheet=document.getElementById('sc-sheet');
+  if(!sheet) return;
+  sheet.innerHTML=`
+    <div class="sc-problem">
+      <h4>${title}</h4>
+      <p>${why}</p>
+      <ol>${steps.map(s=>`<li>${s}</li>`).join('')}</ol>
+      ${extra}
+      <div class="sc-tech">page: ${esc(proto)} \u00B7 secure: ${secure?'yes':'no'}${n?' \u00B7 error: '+esc(n):''}</div>
+      <div class="sc-msg" id="scan-status"></div>
+      <div id="sc-dyn"><div class="sc-row"><button class="sc-ghost" onclick="APP.scanTypeNumber()">\u2328 Type number</button><button class="sc-done" onclick="APP.scanRetry()">Try again</button></div></div>
+      <label class="sc-photo">Read the barcode from a photo instead
+        <input type="file" accept="image/*" capture="environment" onchange="APP.scannerPhoto(this.files[0]); this.value='';">
+      </label>
+    </div>`;
+}
+
+function copyAddr(){
+  const i=document.getElementById('sc-addr'); if(!i) return;
+  i.focus(); i.select(); i.setSelectionRange(0,999);
+  let ok=false; try{ ok=document.execCommand('copy'); }catch(e){}
+  scanStatus(ok?'Address copied \u2014 paste it into Chrome\u2019s address bar.':'Press and hold the address, then choose Copy.', !ok);
+}
+
+/* ---------- photo fallback (only offered when live camera is unavailable) ---------- */
+function loadImageFromFile(file){
+  return new Promise((resolve,reject)=>{
+    const url=URL.createObjectURL(file), img=new Image();
+    img.onload=()=>{ resolve(img); setTimeout(()=>URL.revokeObjectURL(url),8000); };
+    img.onerror=()=>{ URL.revokeObjectURL(url); reject(new Error('image')); };
+    img.src=url;
+  });
+}
+async function loadBitmap(file){
+  if(window.createImageBitmap){ try{ return await createImageBitmap(file); }catch(e){} }
+  return loadImageFromFile(file);
+}
+async function scannerPhoto(file){
+  if(!file) return;
+  scanStatus('Reading your photo\u2026');
+  try{
+    const bmp=await loadBitmap(file);
+    const W=bmp.naturalWidth||bmp.width, H=bmp.naturalHeight||bmp.height;
+    let code=null;
+    if(SC.native){ try{ const c=await SC.native.detect(bmp); if(c&&c.length) code=c[0].rawValue; }catch(e){} }
+    if(!code){
+      const canvas=document.createElement('canvas'), ctx=canvas.getContext('2d',{willReadFrequently:true}), tried={};
+      for(const maxSide of [1600,2600,1000,3300]){
+        const sc=Math.min(1, maxSide/Math.max(W,H)), key=sc.toFixed(3); if(tried[key]) continue; tried[key]=1;
+        canvas.width=Math.round(W*sc); canvas.height=Math.round(H*sc);
+        ctx.drawImage(bmp,0,0,canvas.width,canvas.height);
+        const r=BC.decodeGray(toGray(ctx.getImageData(0,0,canvas.width,canvas.height)),canvas.width,canvas.height,{density:18});
+        if(r){ code=r.text; break; }
+        await new Promise(r=>setTimeout(r,10));
+      }
+    }
+    if(bmp.close) try{ bmp.close(); }catch(e){}
+    if(code){ SC.paused=false; if(SC.mode==='bill'){ closeScanner(); openScanner('bill'); } handleScan(code); return; }
+    scanStatus('Couldn\u2019t find a barcode in that photo. Get closer, keep it sharp and well lit, and try again.', true);
+  }catch(e){ scanStatus('Couldn\u2019t open that photo.', true); }
+}
+
+/* ============================================================
+   HARDWARE SCANNER (Bluetooth / USB) — works without tapping anything
+   A scanner "types" the digits very fast and presses Enter. We catch
+   that even when no box is focused, on New Sale and Items.
+   ============================================================ */
+const KB={buf:'', last:0};
+function onHardwareScan(code){
+  if(UI.view==='billing') posScanEnter(code);
+  else if(UI.view==='items') itemsScanResult(code);
+}
+document.addEventListener('keydown', function(e){
+  const app=document.getElementById('app');
+  if(!app || !app.classList.contains('show')) return;
+  if(document.getElementById('scanner').style.display==='block') return;
+  if(document.getElementById('modal-bg').classList.contains('show')) return;
+  const t=e.target, tag=(t&&t.tagName||'').toLowerCase();
+  if(tag==='input'||tag==='textarea'||tag==='select'||(t&&t.isContentEditable)) return;
+  if(e.ctrlKey||e.metaKey||e.altKey) return;
+  const now=Date.now();
+  if(e.key==='Enter'){
+    const code=KB.buf; KB.buf='';
+    if(code.length>=4 && now-KB.last<150){ e.preventDefault(); onHardwareScan(code); }
+    return;
+  }
+  if(e.key && e.key.length===1){
+    if(now-KB.last>100) KB.buf='';
+    KB.buf+=e.key; KB.last=now;
+  }
+});
+
+/* ---------- scan results on the Items screen ---------- */
+function itemsScanResult(code){
+  const it=findItemByCode(code);
+  if(it){ beep(); toast('Found: '+it.name); openItemModal(it.id); }
+  else { beepBad(); if(confirm('No item has barcode '+code+'.\nAdd it as a new item?')) openItemModal(null,{barcode:code}); }
+}
+function itemsEnter(val){
+  val=String(val||'').trim(); if(!val) return;
+  if(/^\d{6,}$/.test(val)){ const el=document.getElementById('items-search'); if(el) el.value=''; UI.itemSearch=''; renderItemsTable(); itemsScanResult(val); }
+}
+
+/* ============================================================
+   IMPORT ITEMS FROM EXCEL / CSV (like Zobaze's bulk import)
+   ============================================================ */
+function parseCSV(text){
+  text=String(text||'').replace(/^\uFEFF/,'');
+  const first=text.split(/\r?\n/)[0]||'';
+  const delim = (first.split('\t').length>first.split(',').length) ? '\t' : (first.split(';').length>first.split(',').length ? ';' : ',');
+  const rows=[]; let row=[], cell='', q=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(q){
+      if(c==='"'){ if(text[i+1]==='"'){ cell+='"'; i++; } else q=false; } else cell+=c;
+    } else if(c==='"') q=true;
+    else if(c===delim){ row.push(cell); cell=''; }
+    else if(c==='\n'){ row.push(cell); rows.push(row); row=[]; cell=''; }
+    else if(c==='\r'){ /* skip */ }
+    else cell+=c;
+  }
+  if(cell.length || row.length){ row.push(cell); rows.push(row); }
+  return rows.filter(r=>r.some(x=>String(x).trim()!==''));
+}
+const IMPORT_COLS={
+  name:['name','itemname','item','product','productname','description'],
+  category:['category','group','type'],
+  unit:['unit','uom'],
+  barcode:['barcode','barcodenumber','ean','upc','barcodeno'],
+  sku:['sku','itemcode','code'],
+  purchase:['purchaseprice','costprice','cost','cp','purchase','buyingprice'],
+  sale:['saleprice','sellingprice','salesprice','price','sp','rate','mrp'],
+  stock:['stock','openingstock','quantity','qty','currentstock'],
+  low:['lowstock','lowstockalert','reorderlevel','minstock'],
+  wholesale:['wholesaleprice','wholesale'],
+  wholesaleMin:['wholesaleminqty','wholesalemin','minqty']
+};
+let IMPORT_PLAN=null;
+function openImportModal(){
+  IMPORT_PLAN=null;
+  setModal(`
+    <button class="close" onclick="APP.closeModal()">&times;</button>
+    <h3>Import items from Excel / CSV</h3>
+    <div class="desc">Bring in a whole list of items and their barcodes at once. In Excel: <b>File \u2192 Save As \u2192 CSV</b>, then choose that file here.</div>
+    <div class="field"><label>Columns it understands</label>
+      <div class="hint">name, category, unit, barcode, sku, purchase price, sale price, stock, low stock, wholesale price. Only <b>name</b> and <b>sale price</b> are required.</div>
+    </div>
+    <button class="btn btn-sm" onclick="APP.downloadTemplate()">Download sample CSV</button>
+    <div class="field" style="margin-top:14px;"><label>Choose your CSV file</label><input type="file" accept=".csv,.txt,text/csv" onchange="APP.importFileChosen(this.files[0])"></div>
+    <div class="field" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="imp-stock" style="width:auto;"><label style="margin:0;">Also overwrite stock quantity of items that already exist</label></div>
+    <div id="imp-preview"></div>
+    <div class="modal-actions"><button class="btn" onclick="APP.closeModal()">Close</button><button class="btn btn-primary" id="imp-go" disabled onclick="APP.confirmImport()">Import</button></div>
+  `);
+}
+function downloadTemplate(){
+  const csv='name,category,unit,barcode,purchase price,sale price,stock,low stock\nSample Salt 1kg,Grocery,pcs,8900000000011,24,28,24,5\nSample Toothpaste,Household,pcs,8900000000028,45,55,12,4\n';
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download='items-sample.csv'; document.body.appendChild(a); a.click(); a.remove();
+}
+function importFileChosen(file){
+  if(!file) return;
+  const rd=new FileReader();
+  rd.onload=e=>{
+    const rows=parseCSV(e.target.result);
+    const prev=document.getElementById('imp-preview'), go=document.getElementById('imp-go');
+    if(rows.length<2){ prev.innerHTML='<div class="form-err">That file has no item rows.</div>'; go.disabled=true; return; }
+    const norm=h=>String(h).toLowerCase().replace(/[^a-z]/g,'');
+    const head=rows[0].map(norm), idx={};
+    Object.keys(IMPORT_COLS).forEach(k=>{ for(const alias of IMPORT_COLS[k]){ const p=head.indexOf(alias); if(p>=0){ idx[k]=p; break; } } });
+    if(idx.name===undefined || idx.sale===undefined){ prev.innerHTML='<div class="form-err">I couldn\u2019t find a \u201Cname\u201D and a \u201Csale price\u201D column in the first row.</div>'; go.disabled=true; return; }
+    const get=(r,k)=> idx[k]===undefined ? '' : String(r[idx[k]]||'').trim();
+    const num=v=>{ const n=parseFloat(String(v).replace(/[^0-9.\-]/g,'')); return isNaN(n)?null:n; };
+    const plan={add:[],update:[],skipped:0};
+    rows.slice(1).forEach(r=>{
+      const name=get(r,'name'), sale=num(get(r,'sale'));
+      if(!name || sale===null || sale<=0){ if(name||sale!==null) plan.skipped++; return; }
+      const barcode=get(r,'barcode');
+      const data={ name, salePrice:sale, category:get(r,'category')||'General', unit:get(r,'unit')||'pcs', barcode, sku:get(r,'sku'),
+        purchasePrice:num(get(r,'purchase')), stock:num(get(r,'stock')), lowStockAlert:num(get(r,'low')),
+        wholesalePrice:num(get(r,'wholesale')), wholesaleMinQty:num(get(r,'wholesaleMin')) };
+      const existing=(barcode && DB.items.find(i=>sameBarcode(i.barcode,barcode))) || DB.items.find(i=>i.name.toLowerCase()===name.toLowerCase());
+      if(existing) plan.update.push({existing,data}); else plan.add.push(data);
+    });
+    IMPORT_PLAN=plan;
+    prev.innerHTML=`<div class="card" style="margin-top:6px;"><b>${plan.add.length}</b> new item(s) \u00B7 <b>${plan.update.length}</b> existing item(s) will be updated \u00B7 ${plan.skipped} skipped (missing name or price)
+      ${plan.add.length?`<div class="hint" style="margin-top:6px;">e.g. ${plan.add.slice(0,3).map(d=>esc(d.name)).join(', ')}${plan.add.length>3?'\u2026':''}</div>`:''}</div>`;
+    go.disabled=!(plan.add.length||plan.update.length);
+  };
+  rd.readAsText(file);
+}
+function confirmImport(){
+  if(!IMPORT_PLAN) return;
+  const overwriteStock=document.getElementById('imp-stock').checked;
+  const addCat=c=>{ if(c && !DB.categories.includes(c)) DB.categories.push(c); };
+  const addUnit=u=>{ if(u && !DB.units.includes(u)) DB.units.push(u); };
+  IMPORT_PLAN.add.forEach(d=>{
+    addCat(d.category); addUnit(d.unit);
+    DB.items.push({ id:uid('it'), name:d.name, category:d.category, unit:d.unit, sku:d.sku, barcode:d.barcode,
+      purchasePrice:d.purchasePrice||0, salePrice:d.salePrice, stock:Math.max(0,Math.round(d.stock||0)),
+      lowStockAlert:d.lowStockAlert!=null?Math.round(d.lowStockAlert):DB.settings.lowStockDefault,
+      wholesalePrice:d.wholesalePrice, wholesaleMinQty:d.wholesaleMinQty, trackStock:true, createdAt:nowISO() });
+  });
+  IMPORT_PLAN.update.forEach(u=>{
+    const it=u.existing, d=u.data;
+    addCat(d.category); addUnit(d.unit);
+    it.salePrice=d.salePrice; it.category=d.category; it.unit=d.unit;
+    if(d.barcode) it.barcode=d.barcode; if(d.sku) it.sku=d.sku;
+    if(d.purchasePrice!=null) it.purchasePrice=d.purchasePrice;
+    if(d.lowStockAlert!=null) it.lowStockAlert=Math.round(d.lowStockAlert);
+    if(d.wholesalePrice!=null) it.wholesalePrice=d.wholesalePrice;
+    if(d.wholesaleMinQty!=null) it.wholesaleMinQty=d.wholesaleMinQty;
+    if(overwriteStock && d.stock!=null) it.stock=Math.max(0,Math.round(d.stock));
+  });
+  const n=IMPORT_PLAN.add.length+IMPORT_PLAN.update.length;
+  IMPORT_PLAN=null; persist(); closeModal(); render(); toast('Imported '+n+' item(s).');
+}
+
+/* ============================================================
+   SHARE RECEIPT ON WHATSAPP
+   ============================================================ */
+function shareWhatsApp(saleId){
+  const s=DB.sales.find(x=>x.id===saleId); if(!s) return;
+  const party=s.partyId?getParty(s.partyId):null;
+  const lines=[];
+  lines.push('*'+(DB.business.name||'Receipt')+'*');
+  if(DB.business.address) lines.push(DB.business.address);
+  lines.push(s.invoiceNo+' \u00B7 '+fmtDate(s.date));
+  if(party) lines.push('Customer: '+party.name);
+  lines.push('------------------------');
+  s.items.forEach(i=>lines.push(i.name+'  '+i.qty+' \u00D7 '+money(i.price)+' = '+money(i.total)));
+  lines.push('------------------------');
+  if(s.discount>0) lines.push('Discount: -'+money(s.discount));
+  lines.push('*Total: '+money(s.total)+'*');
+  lines.push('Paid ('+s.mode+'): '+money(s.paid));
+  if(s.due>0) lines.push('*Balance due: '+money(s.due)+'*');
+  lines.push('Thank you! Visit again.');
+  let phone=(party&&party.phone||'').replace(/\D/g,'');
+  if(phone.length===10) phone='91'+phone;
+  const url='https://wa.me/'+phone+'?text='+encodeURIComponent(lines.join('\n'));
+  window.open(url,'_blank');
+}
+
+/* ============================================================
+   EXPOSE + INIT
+   ============================================================ */
+window.APP = {
+  pickUser, backToPick, pinKey, newUserFromLogin, addUserFromLogin, finishSetup, logout,
+  go, render, openItemModal, saveItem, deleteItem, openStockAdjustModal, saveStockAdjust,
+  setItemSearch, setItemCat, setPosSearch, posScanEnter, addToCart, cartQty, cartQtySet, cartRemove,
+  setDiscount, setPaid, completeSale, viewSale, collectDue, saveCollectDue, openInvoicePreview,
+  openPurchaseModal, pcartAdd, pcartRemove, savePurchase, openPartyModal, saveParty, deleteParty,
+  openLedger, openPaymentModal, savePayment, exportCSV, saveGeneral, openUserModal, saveUser, deleteUser,
+  addCategory, removeCategory, addUnit, removeUnit, resetAll, exportBackup, importBackup, closeModal,
+  openScanner, closeScanner, toggleTorch, scanTypeNumber, scanTypedSubmit, scanTypedCancel, scanResume, scanAddUnknown, scanPlus, scanRetry,
+  scannerPhoto, copyAddr, scanForBilling, scanForItems, scanBarcodeField, itemsEnter, itemsScanResult,
+  openImportModal, downloadTemplate, importFileChosen, confirmImport, shareWhatsApp
+};
+// patch router to support the party-ledger pseudo view
+const _origRender = render;
+render = function(){
+  if(UI.view==='partyLedger'){ renderSideNav(); renderPartyLedger(); return; }
+  _origRender();
+};
+window.APP.render = render;
+
+if('serviceWorker' in navigator && /^https?:$/.test(location.protocol)){
+  window.addEventListener('load', ()=>{ navigator.serviceWorker.register('sw.js').catch(()=>{}); });
+}
+initLogin();
+</script>
+</body>
+</html>
