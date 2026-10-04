@@ -1,0 +1,68 @@
+COUNTER — GET THE LIVE CAMERA SCANNER WORKING ON YOUR PHONE
+===========================================================
+
+THE ONE RULE
+Phone browsers only give the camera to a page that was opened from a secure
+"https" link (or from "localhost"). A file opened from your phone's storage
+(from the Files app, WhatsApp, Downloads...) is NOT secure, so the camera is
+blocked. This is a browser rule — no app code can get around it. It is also
+why Zobaze works: it is a real Android app, not a web page.
+
+Your shop data is NOT affected: items, sales and customers are stored inside
+your phone's browser, and only the app itself is ever put on a web link.
+
+------------------------------------------------------------------
+OPTION 1 (easiest, ~3 minutes): free https link with Netlify Drop
+------------------------------------------------------------------
+1. On a computer (or the phone), go to:  app.netlify.com/drop
+2. Drag the file  index.html  (or the whole unzipped folder) onto the page.
+   No account is needed to publish. You get a link like
+   https://something-random.netlify.app
+3. IMPORTANT: sites made without an account are deleted after a short time
+   unless you "claim" them. Sign up (free) when Netlify asks, to keep it.
+4. Open that link in CHROME on your phone (not inside WhatsApp or another app).
+5. Chrome menu (three dots) -> "Install app" or "Add to Home screen".
+6. Open Counter from your home screen -> New Sale -> SCAN -> tap "Allow" for
+   the camera. Done.
+
+If you use the whole folder (all 5 files), the app also works offline.
+If you only drag index.html it still gets the camera; offline mode is the
+part that needs the extra files.
+
+KEEP THE SAME LINK. Data is stored per link. If you later move to a different
+link, your data does not follow it — use Settings -> Backup -> Download backup
+first, then Restore on the new link.
+
+------------------------------------------------------------------
+OPTION 2 (try first, 1 minute): open the file with a file:// address
+------------------------------------------------------------------
+Only if you have saved Counter-Shop-Manager.html on the phone:
+1. Open CHROME.
+2. In the address bar type:
+       file:///sdcard/Download/Counter-Shop-Manager.html
+   (change "Download" if you saved it in another folder)
+3. Allow file access if Chrome asks.
+Some phones/browsers still refuse the camera on file addresses. If yours
+does, use Option 1.
+
+------------------------------------------------------------------
+OPTION 3: no website at all — Bluetooth / USB scanner
+------------------------------------------------------------------
+Pair a barcode scanner, open New Sale (or Items) and scan. You don't have to
+tap any box first. Works with the plain HTML file, no https needed.
+
+------------------------------------------------------------------
+OPTION 4: computer
+------------------------------------------------------------------
+Open Counter-Shop-Manager.html in Chrome. The webcam scanner works there.
+
+------------------------------------------------------------------
+UPDATING LATER
+------------------------------------------------------------------
+Drop the new index.html again on the same Netlify site (Deploys page). If you
+use the offline files, change 'counter-v3' to 'counter-v4' inside sw.js first
+so phones fetch the new version.
+
+WANT A REAL .APK?
+Once the app has an https link, a free tool such as PWABuilder can package
+that link as an Android app file.
